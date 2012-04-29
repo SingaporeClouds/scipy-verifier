@@ -28,7 +28,16 @@ sol =  scipy.interpolate.splev(0.5,rep)
 
 <br>
 Tests:<br>
-<textarea id="tests" rows="10" cols="80">almost_equal(0.877524499389, sol)</textarea>
+<textarea id="tests" rows="10" cols="80">>>> assert_almost_equal(sol, 0.87752449938946964)
+>>> assert_almost_equal(sol,  0.877524499)
+>>> assert_almost_equal(sol,  0.877524499,15)
+>>> assert_approx_equal(0.12345677777777e-20, 0.1234567e-20)
+>>> assert_array_almost_equal([1.0,2.33333,0],[1.0,2.33339,0], decimal=5)
+>>> assert_array_less([1.0, 1.0, 0], [1.1, 2.0, 0])
+>>> assert_equal(3, 3)
+>>> assert_('"bye"'=='"welcome"')
+>>> assert_string_equal('"hello"', '"hello"')
+</textarea>
 <form action="/scipy" method="POST">
 <input type="hidden" name="jsonrequest" id="jsonrequest"/>
 <input type="submit" onclick="updateValue()"></input>

@@ -41,7 +41,6 @@ def scipyVerifier(request):
         return [responseJSON]
     
     logging.info("Python verifier received: %s",jsonrequest) 
-    
     #queue for comunication with a new instance
     outQueue = Queue()  
     #Create a instance for run the code
@@ -66,6 +65,7 @@ def runScipyInstance(jsonrequest,outQueue):
     """ run a new  python instance and  test the code"""
     #laod json data in python object
     try:
+        print jsonrequest
         jsonrequest = json.loads(jsonrequest)
         solution = str(jsonrequest["solution"])
         tests    = str(jsonrequest["tests"])
@@ -120,12 +120,14 @@ def execute_test_cases(testCases, namespace,ExecutionError):
     for e in testCases:
         #Identify numpy assertions 
         numpyAssertions = "(assert_|assert_almost_equal|assert_approx_equal|assert_array_almost_equal|assert_array_equal|assert_array_less|assert_string_equal|assert_equal)"
-        numpycall =  re.findall(numpyAssertions+"\(([a-zA-Z0-9_ ]+|\".*\"|\[.*\]|\(.*\)|\{.*\})(,|==)([a-zA-Z0-9_ ]+|\".*\"|\[.*\]|\(.*\)|\{.*\})(.*)\)",e.source)
+        numpycall =  re.findall(numpyAssertions+"\( *([a-zA-Z0-9_\.]+|'.*'|\".*\"|\[[^\[\]]*\]|\([^\(\)]*\)) *(,|==) *([a-zA-Z0-9_\.]+|'.*'|\".*\"|\[[^\[\]]*\]|\([^\(\)]*\))(.*)\)",e.source)
+        print numpycall
+        print e.source
         if len(numpycall)>0:
             call = e.source.strip()
             try:
                 got            = eval(numpycall[0][1],namespace)
-                expected      = eval(numpycall[0][3],namespace)
+                expected      =  eval(numpycall[0][3],namespace)
             except:
                 ExecutionError()
                 return
@@ -137,6 +139,10 @@ def execute_test_cases(testCases, namespace,ExecutionError):
             except AssertionError:
                 correct = False
                 solved = False
+            except:
+                ExecutionError()
+                return
+                
         #run other test
         else:
             try:
