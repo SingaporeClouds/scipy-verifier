@@ -1,0 +1,37 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+<script type="text/javascript">
+function updateValue() {
+    var jsonrequest = document.getElementById('jsonrequest')
+    var solution = document.getElementById('solution')
+    var tests = document.getElementById('tests')
+    var obj = {solution: solution.value, tests: tests.value}
+    jsonrequest.value = JSON.stringify(obj)
+}
+</script>
+<body>
+<h2>Scipy verifier</h2>
+<br>
+Solution code:<br>
+<textarea id="solution" rows="10" cols="80">import numpy
+import scipy
+import scipy.interpolate
+
+x = numpy.arange(10,dtype='float32') * 0.3
+y = numpy.cos(x)
+
+rep = scipy.interpolate.splrep(x,y)
+sol =  scipy.interpolate.splev(0.5,rep)
+</textarea>
+
+<br>
+Tests:<br>
+<textarea id="tests" rows="10" cols="80">almost_equal(0.877524499389, sol)</textarea>
+<form action="/scipy" method="POST">
+<input type="hidden" name="jsonrequest" id="jsonrequest"/>
+<input type="submit" onclick="updateValue()"></input>
+</form>
+</body>
+</html>
