@@ -5,7 +5,7 @@ import json
 import logging
 import doctest
 import traceback
-
+import time
 from multiprocessing import Process,freeze_support, Queue
 from Queue import Empty
 
@@ -48,7 +48,13 @@ def scipyVerifier(request):
     instance.start()
     
     try:
-        result = outQueue.get(True,5)
+        timeout = 25
+        while outQueue.empty():
+            time.sleep(1.0/5)
+            timeout = timeout - 1
+            if timeout==0:
+                raise Empty
+        result = outQueue.get(False)
         if instance.is_alive():
             instance.terminate()
     except Empty:
@@ -65,7 +71,6 @@ def runScipyInstance(jsonrequest,outQueue):
     """ run a new  python instance and  test the code"""
     #laod json data in python object
     try:
-        print jsonrequest
         jsonrequest = json.loads(jsonrequest)
         solution = str(jsonrequest["solution"])
         tests    = str(jsonrequest["tests"])
