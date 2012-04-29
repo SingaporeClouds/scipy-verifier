@@ -6,9 +6,11 @@ import logging
 import doctest
 import traceback
 import time
-from multiprocessing import Process,freeze_support, Queue
-from Queue import Empty
-
+import subprocess
+import os
+#from multiprocessing import Process,freeze_support, Queue
+from threading import Thread
+from Queue import Empty,Queue
 from gserver.routes import Routes
 from gserver.request import parse_vals
 from gserver.wsgi import WSGIServer
@@ -22,6 +24,38 @@ htmlFile = open("index.html")
 main_page_htm =  htmlFile.read()
 htmlFile.close()
 
+def Command(*cmd,**kwargs):
+    '''Enables to run subprocess commands in a different thread
+       with TIMEOUT option!
+       Based on jcollado's solution:
+       http://stackoverflow.com/questions/1191374/subprocess-with-timeout/4825933#4825933
+       and  https://gist.github.com/1306188
+    '''
+    
+    if kwargs.has_key("timeout"):
+        timeout = kwargs["timeout"]
+        del kwargs["timeout"]
+    else:
+        timeout = None
+    process = []
+    
+    def target(process,out,*cmd,**k):
+        process.append(subprocess.Popen(cmd, stdout=subprocess.PIPE,**k))
+        out.put(process[0].communicate()[0])
+        
+    outQueue = Queue()
+    args = [process,outQueue]
+    args.extend(cmd)
+    thread = Thread(target=target, args=args, kwargs=kwargs)
+    thread.start()
+    thread.join(timeout)
+    if thread.is_alive():
+       process[0].terminate()
+       thread.join()
+       raise Empty
+    return  outQueue.get()
+ 
+ 
 #main page handler
 @route("^/$")
 def mainPage(req):
@@ -42,24 +76,14 @@ def scipyVerifier(request):
     
     logging.info("Python verifier received: %s",jsonrequest) 
     #queue for comunication with a new instance
-    outQueue = Queue()  
+    #outQueue = Queue()  
     #Create a instance for run the code
-    instance = Process(target=runScipyInstance, args=(jsonrequest,outQueue))
-    instance.start()
+    #instance = Thread(target=runScipyInstance, args=(jsonrequest,outQueue))
+    #instance.start()
     
     try:
-        timeout = 25
-        while outQueue.empty():
-            time.sleep(1.0/5)
-            timeout = timeout - 1
-            if timeout==0:
-                raise Empty
-        result = outQueue.get(False)
-        if instance.is_alive():
-            instance.terminate()
+        result = Command("/usr/bin/env","python",os.path.join(os.path.dirname(__file__),"scipyverifier.py"),jsonrequest,timeout=5)
     except Empty:
-        if instance.is_alive():
-            instance.terminate()
         s = "Your code took too long to return. Your solution may be stuck "+\
             "in an infinite loop. Please try again."
         result = json.dumps({"errors": s})
@@ -67,113 +91,7 @@ def scipyVerifier(request):
         
     return[result]
 
-def runScipyInstance(jsonrequest,outQueue):
-    """ run a new  python instance and  test the code"""
-    #laod json data in python object
-    try:
-        jsonrequest = json.loads(jsonrequest)
-        solution = str(jsonrequest["solution"])
-        tests    = str(jsonrequest["tests"])
-    except:
-        responseDict = {'errors': 'Bad request'}
-        logging.error("Bad request")
-        responseJSON = json.dumps(responseDict)
-        outQueue.put(responseJSON)
-        return
-    
-    def ExecutionError():
-        """ catch all the execution error, for the solution and each test """
-        errors = traceback.format_exc()
-        logging.info("Python verifier returning errors =%s", errors)
-        responseDict = {'errors': '%s' % errors}
-        responseJSON = json.dumps(responseDict)
-        outQueue.put(responseJSON)
-        
-    try:
-        # import numpy testing and execute solution 
-        namespace = {}
-        compiled = compile("from numpy.testing import *", 'submitted code', 'exec')
-        exec compiled in namespace
-        compiled = compile(solution, 'submitted code', 'exec')
-        exec compiled in namespace
-        namespace['YOUR_SOLUTION'] = solution.strip()
-        namespace['LINES_IN_YOUR_SOLUTION'] = len(solution.strip().splitlines())
-    except:
-        ExecutionError()
-        return
-    
-    #get tests
-    try:
-        test_cases = doctest.DocTestParser().get_examples(tests)
-    except:
-        ExecutionError()
-        return
-    
-    results = execute_test_cases(test_cases, namespace,ExecutionError)
-    
-    responseJSON = json.dumps(results)
-    logging.info("Python verifier returning %s",responseJSON)
-    
-    outQueue.put(responseJSON)
-    
-def execute_test_cases(testCases, namespace,ExecutionError):
-    import sys
-    """ run all the tests case """
-    
-    resultList = []
-    solved = True
-    for e in testCases:
-        #Identify numpy assertions 
-        numpyAssertions = "(assert_|assert_almost_equal|assert_approx_equal|assert_array_almost_equal|assert_array_equal|assert_array_less|assert_string_equal|assert_equal)"
-        numpycall =  re.findall(numpyAssertions+"\( *([a-zA-Z0-9_\.]+|'.*'|\".*\"|\[[^\[\]]*\]|\([^\(\)]*\)) *(,|==) *([a-zA-Z0-9_\.]+|'.*'|\".*\"|\[[^\[\]]*\]|\([^\(\)]*\))(.*)\)",e.source)
-        print numpycall
-        print e.source
-        if len(numpycall)>0:
-            call = e.source.strip()
-            try:
-                got            = eval(numpycall[0][1],namespace)
-                expected      =  eval(numpycall[0][3],namespace)
-            except:
-                ExecutionError()
-                return
-            assertion_call = numpycall[0][0]+"(%s%s%s"%(str(got),numpycall[0][2],str(expected)) + numpycall[0][4] + ")"
-            correct = True
-            #run assertion
-            try:
-                eval(assertion_call, namespace)
-            except AssertionError:
-                correct = False
-                solved = False
-            except:
-                ExecutionError()
-                return
-                
-        #run other test
-        else:
-            try:
-                call = e.source.strip()
-                logging.warning('call: %s', (call,))
-                got = eval(call, namespace)
-                if not e.want:
-                    continue
-                expected = eval(e.want, namespace)
-            except:
-                ExecutionError()
-                return
-            correct = True
-            if got == expected:
-                correct = True
-            else:
-                correct = False
-                solved = False
-        resultDict = {'call': call, 'expected': expected, 'received': "%(got)s" % {'got': got}, 'correct': correct}
-        resultList.append(resultDict)
-        
-    printed = sys.stdout.flush()
-    responseDict = {"solved": solved , "results": resultList, "printed":printed}
-    return responseDict
   
 if __name__ == '__main__':
-    freeze_support()
     print 'Serving on 8080...'
     WSGIServer(('', 8080), routes).serve_forever()
