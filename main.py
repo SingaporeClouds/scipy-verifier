@@ -8,12 +8,17 @@ import traceback
 import time
 import subprocess
 import os
-#from multiprocessing import Process,freeze_support, Queue
-from threading import Thread
-from Queue import Empty,Queue
+import signal
+
+
+from gevent import Greenlet
 from gserver.routes import Routes
 from gserver.request import parse_vals
 from gserver.wsgi import WSGIServer
+from gevent import monkey
+monkey.patch_all()
+from Queue import Empty,Queue
+from scipyverifier import runScipyInstance,TimeoutException
 
 #create routes
 routes = Routes()
@@ -24,38 +29,25 @@ htmlFile = open("index.html")
 main_page_htm =  htmlFile.read()
 htmlFile.close()
 
-def Command(*cmd,**kwargs):
-    '''Enables to run subprocess commands in a different thread
-       with TIMEOUT option!
-       Based on jcollado's solution:
-       http://stackoverflow.com/questions/1191374/subprocess-with-timeout/4825933#4825933
-       and  https://gist.github.com/1306188
-    '''
+
+class Worker(Greenlet):
     
-    if kwargs.has_key("timeout"):
-        timeout = kwargs["timeout"]
-        del kwargs["timeout"]
-    else:
-        timeout = None
-    process = []
+    def __init__(self,jsonrequest,out):
+        Greenlet.__init__(self)
+        self.jsonrequest = jsonrequest
+        self.out =  out
     
-    def target(process,out,*cmd,**k):
-        process.append(subprocess.Popen(cmd, stdout=subprocess.PIPE,**k))
-        out.put(process[0].communicate()[0])
+    def signal_handler(self,signum, frame):
+        raise TimeoutException
+
+    def _run(self):
+        signal.signal(signal.SIGALRM, self.signal_handler)
+        signal.alarm(5)   # Ten seconds
+        try:
+            runScipyInstance(self.jsonrequest,self.out)
+        except:
+            return
         
-    outQueue = Queue()
-    args = [process,outQueue]
-    args.extend(cmd)
-    thread = Thread(target=target, args=args, kwargs=kwargs)
-    thread.start()
-    thread.join(timeout)
-    if thread.is_alive():
-       process[0].terminate()
-       thread.join()
-       raise Empty
-    return  outQueue.get()
- 
- 
 #main page handler
 @route("^/$")
 def mainPage(req):
@@ -75,14 +67,12 @@ def scipyVerifier(request):
         return [responseJSON]
     
     logging.info("Python verifier received: %s",jsonrequest) 
-    #queue for comunication with a new instance
-    #outQueue = Queue()  
-    #Create a instance for run the code
-    #instance = Thread(target=runScipyInstance, args=(jsonrequest,outQueue))
-    #instance.start()
     
+    out = Queue()
+    new_job = Worker(jsonrequest,out)
+    new_job.start()
     try:
-        result = Command("/usr/bin/env","python",os.path.join(os.path.dirname(__file__),"scipyverifier.py"),jsonrequest,timeout=5)
+        result =  out.get(True, 5)
     except Empty:
         s = "Your code took too long to return. Your solution may be stuck "+\
             "in an infinite loop. Please try again."
@@ -91,7 +81,6 @@ def scipyVerifier(request):
         
     return[result]
 
-  
 if __name__ == '__main__':
     print 'Serving on 8080...'
     WSGIServer(('', 8080), routes).serve_forever()

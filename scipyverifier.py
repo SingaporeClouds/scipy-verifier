@@ -6,6 +6,8 @@ import traceback
 import sys
 from Queue import Queue
 
+class TimeoutException(Exception): pass
+
 def runScipyInstance(jsonrequest,outQueue):
     """ run a new  python instance and  test the code"""
     #laod json data in python object
@@ -37,6 +39,8 @@ def runScipyInstance(jsonrequest,outQueue):
         exec compiled in namespace
         namespace['YOUR_SOLUTION'] = solution.strip()
         namespace['LINES_IN_YOUR_SOLUTION'] = len(solution.strip().splitlines())
+    except TimeoutException:
+        return
     except:
         ExecutionError()
         return
@@ -44,6 +48,8 @@ def runScipyInstance(jsonrequest,outQueue):
     #get tests
     try:
         test_cases = doctest.DocTestParser().get_examples(tests)
+    except TimeoutException:
+        return
     except:
         ExecutionError()
         return
@@ -62,28 +68,31 @@ def execute_test_cases(testCases, namespace,ExecutionError):
     resultList = []
     solved = True
     for e in testCases:
+        correct = True
         #Identify numpy assertions 
         numpyAssertions = "(assert_|assert_almost_equal|assert_approx_equal|assert_array_almost_equal|assert_array_equal|assert_array_less|assert_string_equal|assert_equal)"
-        numpycall =  re.findall(numpyAssertions+"\( *([a-zA-Z0-9_\.]+|'.*'|\".*\"|\[[^\[\]]*\]|\([^\(\)]*\)) *(,|==) *([a-zA-Z0-9_\.]+|'.*'|\".*\"|\[[^\[\]]*\]|\([^\(\)]*\))(.*)\)",e.source)
+        numpycall =  re.findall(numpyAssertions,e.source)
         if len(numpycall)>0:
             call = e.source.strip()
-            try:
-                got            = eval(numpycall[0][1],namespace)
-                expected      =  eval(numpycall[0][3],namespace)
-            except:
-                ExecutionError()
-                return
-            assertion_call = numpycall[0][0]+"(%s%s%s"%(str(got),numpycall[0][2],str(expected)) + numpycall[0][4] + ")"
+            logging.warning('call: %s', (call,))
+            got = True
             correct = True
             #run assertion
             try:
-                eval(assertion_call, namespace)
+                eval(call, namespace)
             except AssertionError:
-                correct = False
-                solved = False
+                got = False
+            except TimeoutException:
+                return
             except:
                 ExecutionError()
                 return
+            if not e.want:
+                continue
+            expected = eval(e.want, namespace)
+            if got != expected:
+                correct = False
+                solved = False
                 
         #run other test
         else:
@@ -94,13 +103,12 @@ def execute_test_cases(testCases, namespace,ExecutionError):
                 if not e.want:
                     continue
                 expected = eval(e.want, namespace)
+            except TimeoutException:
+                return
             except:
                 ExecutionError()
                 return
-            correct = True
-            if got == expected:
-                correct = True
-            else:
+            if got != expected:
                 correct = False
                 solved = False
         resultDict = {'call': call, 'expected': expected, 'received': "%(got)s" % {'got': got}, 'correct': correct}
