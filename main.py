@@ -36,17 +36,22 @@ class Worker(Greenlet):
         Greenlet.__init__(self)
         self.jsonrequest = jsonrequest
         self.out =  out
-    
+        
     def signal_handler(self,signum, frame):
         raise TimeoutException
-
+    
+    def signal_handler_2(self,signum, frame):
+        print "hack!"
+        
     def _run(self):
         signal.signal(signal.SIGALRM, self.signal_handler)
-        signal.alarm(5)   # Ten seconds
+        alarm = signal.alarm(5)   # 5 seconds
         try:
             runScipyInstance(self.jsonrequest,self.out)
         except:
-            return
+            pass
+        signal.signal(signal.SIGALRM, self.signal_handler_2)
+        
         
 #main page handler
 @route("^/$")
@@ -65,14 +70,13 @@ def scipyVerifier(request):
         responseJSON = json.dumps(responseDict)
         logging.error("Bad request")
         return [responseJSON]
-    
-    logging.info("Python verifier received: %s",jsonrequest) 
-    
     out = Queue()
+    logging.info("Python verifier received: %s",jsonrequest) 
     new_job = Worker(jsonrequest,out)
     new_job.start()
+    new_job.join(5)
     try:
-        result =  out.get(True, 5)
+        result =  out.get_nowait()
     except Empty:
         s = "Your code took too long to return. Your solution may be stuck "+\
             "in an infinite loop. Please try again."
