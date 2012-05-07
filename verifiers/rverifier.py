@@ -108,6 +108,9 @@ if __name__ == '__main__':
     os.environ['HOME']     = user_home_dir
     os.environ['LOGNAME']  = user_name
     os.environ['USER']  = user_name
+    os.environ['LANGUAGE']  = "en_US.UTF-8"
+    os.environ['LANG']  = "en_US.UTF-8"
+    os.environ['LC_ALL']  = "en_US.UTF-8"
     os.setgid(user_gid)
     os.setuid(user_uid)
     out = Queue()
