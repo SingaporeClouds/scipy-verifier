@@ -2,7 +2,7 @@
 #stop the server
 
 import os,sys
-folder = os.path.dirname(__file__)
+folder = "/home/server/scipy-verifier/"
 os.chdir(folder)
 
 import signal

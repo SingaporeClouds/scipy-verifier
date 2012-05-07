@@ -4,7 +4,7 @@
 
 import sys
 import os
-folder = os.path.dirname(__file__)
+folder = "/home/server/scipy-verifier/"
 sys.path.append(folder)
 
 import json

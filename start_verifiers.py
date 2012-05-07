@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # start the server
 import os,sys
-folder = os.path.dirname(__file__)
+folder = "/home/server/scipy-verifier/"
 os.chdir(folder)
 os.popen("fuser -k 80/tcp").read()
 output = str(os.spawnv(os.P_NOWAIT,sys.executable,("python",folder+"/server.py","")))

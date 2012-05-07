@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import os
-folder = os.path.dirname(__file__).replace("installation","")
+folder = "/home/server/scipy-verifier/"
 
 if __name__=="__main__":
     #cd
