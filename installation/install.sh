@@ -7,7 +7,12 @@ sudo gpg -a --export E084DAB9 | sudo apt-key add -
 sudo apt-get update
 sudo apt-get upgrade
 sudo apt-get install python-scipy python-rpy2 git python-setuptools python-dev build-essential libevent-dev python-gevent
-sudo easy_install gserver
+sudo easy_install gserver language-pack-id
+export LANGUAGE=en_US.UTF-8
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+locale-gen en_US.UTF-8
+sudo dpkg-reconfigure locales
 sudo mkdir /home/server
 cd /home/server
 sudo mkdir libs
