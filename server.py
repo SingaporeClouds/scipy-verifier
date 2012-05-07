@@ -72,7 +72,7 @@ htmlFile.close()
 #update page
 @route("^/update$")
 def update(req):
-    os.spawnv(os.P_NOWAIT,sys.executable,("python",folder+"/installation/update.py",""))
+    os.system("python "+folder+"/installation/update.py")
     return ["ok"]
        
 #scipy page handler
