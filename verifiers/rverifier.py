@@ -41,8 +41,8 @@ def runRInstance(jsonrequest,outQueue):
 
     try:
         # import RUnit , testthat and execute solution 
-        r("library('/home/server/libs/RUnit')")
-        r("library('/home/server/libs/testthat')")
+        r("library('RUnit','/home/server/libs/')")
+        r("library('testthat','/home/server/libs/')")
         r(solution)
     except:
         ExecutionError()
