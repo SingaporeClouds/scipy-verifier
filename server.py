@@ -1,39 +1,25 @@
-# !/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-import re
+#!/usr/bin/env python
+
+import sys
+import os
+folder = os.path.dirname(__file__)
+sys.path.append(folder)
+
 import json
 import logging
-import doctest
-import traceback
-import time
 import subprocess
-import os
-import signal
+import time
 
-
-from gevent import Greenlet
 from gserver.routes import Routes
 from gserver.request import parse_vals
 from gserver.wsgi import WSGIServer
 from gevent import monkey
 monkey.patch_all()
 from Queue import Empty,Queue
-from scipyverifier import runScipyInstance,TimeoutException
 from threading import Thread
 
-#create routes
-routes = Routes()
-route = routes.route
-
-#load scipy page
-htmlFile = open("scipy.html")
-scipy_page_htm =  htmlFile.read()
-htmlFile.close()
-
-#load R page
-htmlFile = open("R.html")
-R_page_htm =  htmlFile.read()
-htmlFile.close()
 
 def Command(*cmd,**kwargs):
 
@@ -53,7 +39,7 @@ def Command(*cmd,**kwargs):
     process = []
 
     def target(process,out,*cmd,**k):
-        process.append(subprocess.Popen(cmd, stdout=subprocess.PIPE,**k))
+        process.append(subprocess.Popen(cmd,stdout=subprocess.PIPE,**k))
         out.put(process[0].communicate()[0])
         
     outQueue = Queue()
@@ -63,34 +49,32 @@ def Command(*cmd,**kwargs):
     thread.start()
     thread.join(timeout)
     if thread.is_alive():
-       process[0].terminate()
-       thread.join()
-       raise Empty
+        process[0].terminate()
+        thread.join()
+        raise Empty
     return  outQueue.get()
 
-class Worker(Greenlet):
-    
-    def __init__(self,jsonrequest,out):
-        Greenlet.__init__(self)
-        self.jsonrequest = jsonrequest
-        self.out =  out
-        
-    def signal_handler(self,signum, frame):
-        raise TimeoutException
-    
-    def signal_handler_2(self,signum, frame):
-        print "hack!"
-        
-    def _run(self):
-        signal.signal(signal.SIGALRM, self.signal_handler)
-        alarm = signal.alarm(5)   # 5 seconds
-        try:
-            runScipyInstance(self.jsonrequest,self.out)
-        except:
-            pass
-        signal.signal(signal.SIGALRM, self.signal_handler_2)
-        
-        
+
+#create routes
+routes = Routes()
+route = routes.route
+
+#load scipy page
+htmlFile = open(folder+"/html/scipy.html")
+scipy_page_htm =  htmlFile.read()
+htmlFile.close()
+
+#load R page
+htmlFile = open(folder+"/html/R.html")
+R_page_htm =  htmlFile.read()
+htmlFile.close()
+
+#update page
+@route("^/update$")
+def update(req):
+    os.spawnv(os.P_NOWAIT,sys.executable,("python",folder+"/installation/update.py",""))
+    return ["ok"]
+       
 #scipy page handler
 @route("^/scipy_test$")
 def scipyPage(req):
@@ -113,13 +97,8 @@ def scipyVerifier(request):
         responseJSON = json.dumps(responseDict)
         logging.error("Bad request")
         return [responseJSON]
-    out = Queue()
-    logging.info("Python verifier received: %s",jsonrequest) 
-    new_job = Worker(jsonrequest,out)
-    new_job.start()
-    new_job.join(5)
     try:
-        result =  out.get_nowait()
+        result = Command("/usr/bin/env","python",folder+"/verifiers/scipyverifier.py",jsonrequest,timeout=5)
     except Empty:
         s = "Your code took too long to return. Your solution may be stuck "+\
             "in an infinite loop. Please try again."
@@ -140,7 +119,7 @@ def RVerifier(request):
         logging.error("Bad request")
         return [responseJSON]
     try:
-        result = Command("/usr/bin/env","python",os.path.join(os.path.dirname(__file__),"rverifier.py"),jsonrequest,timeout=5)
+        result = Command("/usr/bin/env","python",folder+"/verifiers/rverifier.py",jsonrequest,timeout=5)
     except Empty:
         s = "Your code took too long to return. Your solution may be stuck "+\
             "in an infinite loop. Please try again."
@@ -149,5 +128,8 @@ def RVerifier(request):
     return[result]
     
 if __name__ == '__main__':
-    print 'Serving on 8080...'
-    WSGIServer(('', 8080), routes).serve_forever()
+    sys.stderr = open(folder+"/error_log","a")
+    sys.stdout = open(folder+"/log","a")
+
+    print 'Serving on 80...'
+    WSGIServer(('', 80), routes).serve_forever()

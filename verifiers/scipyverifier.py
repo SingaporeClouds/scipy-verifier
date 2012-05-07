@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# !/usr/bin/env python
+
 import re
 import json
 import logging
@@ -5,6 +8,8 @@ import doctest
 import traceback
 import sys
 from Queue import Queue
+import StringIO
+
 
 class TimeoutException(Exception): pass
 
@@ -22,13 +27,17 @@ def runScipyInstance(jsonrequest,outQueue):
         outQueue.put(responseJSON)
         return
     
+    oldfile = sys.stdout
+    sys.stdout = newfile =  StringIO.StringIO()
+    
     def ExecutionError():
         """ catch all the execution error, for the solution and each test """
+        sys.stdout = oldfile
         errors = traceback.format_exc()
         logging.info("Python verifier returning errors =%s", errors)
         responseDict = {'errors': '%s' % errors}
         responseJSON = json.dumps(responseDict)
-        outQueue.put(responseJSON)
+        outQueue.put(responseJSON) 
         
     try:
         # import numpy testing and execute solution 
@@ -55,7 +64,9 @@ def runScipyInstance(jsonrequest,outQueue):
         return
     
     results = execute_test_cases(test_cases, namespace,ExecutionError)
-    
+    sys.stdout = oldfile
+    printed = newfile.getvalue()
+    results["printed"] = printed
     responseJSON = json.dumps(results)
     logging.info("Python verifier returning %s",responseJSON)
     outQueue.put(responseJSON)
@@ -114,11 +125,23 @@ def execute_test_cases(testCases, namespace,ExecutionError):
         resultDict = {'call': call, 'expected': expected, 'received': "%(got)s" % {'got': got}, 'correct': correct}
         resultList.append(resultDict)
         
-    printed = sys.stdout.flush()
-    responseDict = {"solved": solved , "results": resultList, "printed":printed}
+   
+    responseDict = {"solved": solved , "results": resultList}
     return responseDict
 
 if __name__ == '__main__':
+    import pwd
+    import os
+    pw_record      = pwd.getpwnam("verifiers")
+    user_name      = pw_record.pw_name
+    user_home_dir  = pw_record.pw_dir
+    user_uid       = pw_record.pw_uid
+    user_gid       = pw_record.pw_gid
+    os.environ['HOME']     = user_home_dir
+    os.environ['LOGNAME']  = user_name
+    os.environ['USER']  = user_name
+    os.setgid(user_gid)
+    os.setuid(user_uid)
     out = Queue()
     jsonrequet = sys.argv[1]
     runScipyInstance(jsonrequet,out)
