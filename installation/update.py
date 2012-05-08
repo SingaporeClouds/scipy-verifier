@@ -5,9 +5,11 @@ folder = "/home/server/scipy-verifier/"
 if __name__=="__main__":
     #cd
     os.chdir(folder)
-    #stop
-    print os.popen("/usr/bin/env python "+folder+"stop_verifiers.py").read()
     #git pull
-    print os.popen("/usr/bin/env git pull").read()
-    #start
-    print os.popen("/usr/bin/env python "+folder+"start_verifiers.py").read()
+    msg =  os.popen("/usr/bin/env git pull origin master").read()
+    msg = msg.splitlines()
+    if len(msg)>1:
+        #stop
+        print os.popen("/usr/bin/env python "+folder+"stop_verifiers.py").read()
+        #start
+        os.execl("/usr/bin/env","python",folder+"start_verifiers.py")

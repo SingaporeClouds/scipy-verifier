@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #stop the server
 
-import os,sys
+import os
 folder = "/home/server/scipy-verifier/"
 os.chdir(folder)
 

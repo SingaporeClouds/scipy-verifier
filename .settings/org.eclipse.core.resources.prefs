@@ -1,5 +1,5 @@
-#Mon May 07 08:42:04 COT 2012
+#Tue May 08 15:18:27 COT 2012
 eclipse.preferences.version=1
-encoding//verifiers/rverifier.py=utf-8
-encoding//verifiers/scipyverifier.py=utf-8
+encoding//verifiers/R_verifier.py=utf-8
+encoding//verifiers/scipy_verifier.py=utf-8
 encoding/server.py=utf-8

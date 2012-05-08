@@ -3,20 +3,15 @@
 #!/usr/bin/env python
 
 import sys
-import os
 folder = "/home/server/scipy-verifier/"
 sys.path.append(folder)
 
 import json
 import logging
 import subprocess
-import time
-
 from gserver.routes import Routes
 from gserver.request import parse_vals
 from gserver.wsgi import WSGIServer
-from gevent import monkey
-monkey.patch_all()
 from Queue import Empty,Queue
 from threading import Thread
 
@@ -68,12 +63,6 @@ htmlFile.close()
 htmlFile = open(folder+"/html/R.html")
 R_page_htm =  htmlFile.read()
 htmlFile.close()
-
-#update page
-@route("^/update$")
-def update(req):
-    os.system("python "+folder+"/installation/update.py")
-    return ["ok"]
        
 #scipy page handler
 @route("^/scipy_test$")
@@ -98,7 +87,7 @@ def scipyVerifier(request):
         logging.error("Bad request")
         return [responseJSON]
     try:
-        result = Command("/usr/bin/env","python",folder+"/verifiers/scipyverifier.py",jsonrequest,timeout=5)
+        result = Command("/usr/bin/env","python",folder+"/verifiers/scipy_verifier.py",jsonrequest,timeout=5)
     except Empty:
         s = "Your code took too long to return. Your solution may be stuck "+\
             "in an infinite loop. Please try again."
@@ -119,7 +108,7 @@ def RVerifier(request):
         logging.error("Bad request")
         return [responseJSON]
     try:
-        result = Command("/usr/bin/env","python",folder+"/verifiers/rverifier.py",jsonrequest,timeout=5)
+        result = Command("/usr/bin/env","python",folder+"/verifiers/R_verifier.py",jsonrequest,timeout=5)
     except Empty:
         s = "Your code took too long to return. Your solution may be stuck "+\
             "in an infinite loop. Please try again."
@@ -130,6 +119,5 @@ def RVerifier(request):
 if __name__ == '__main__':
     sys.stderr = open(folder+"/error_log","a")
     sys.stdout = open(folder+"/log","a")
-
     print 'Serving on 80...'
     WSGIServer(('', 80), routes).serve_forever()
