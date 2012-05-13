@@ -58,7 +58,7 @@ def runRInstance(jsonrequest,outQueue):
     results = execute_test_cases(test_cases,ExecutionError)
     sys.stdout = oldfile
     printed = newfile.getvalue()
-    results["printed"] = printed
+    results["printed"] = ""
     responseJSON = json.dumps(results)
     logging.info("Python verifier returning %s",responseJSON)
     outQueue.put(responseJSON)
@@ -91,7 +91,10 @@ def execute_test_cases(testCases,ExecutionError):
         if got != expected:
             correct = False
             solved = False
-        resultDict = {'call': call, 'expected': expected, 'received': "%(got)s" % {'got': got}, 'correct': correct}
+        msg = sys.stdout.getvalue()
+        msg = " - "+msg if msg !="" else ""
+        resultDict = {'call': call, 'expected': expected, 'received': "%s%s" % (got,msg), 'correct': correct}
+        sys.stdout = StringIO.StringIO()
         resultList.append(resultDict)
         
     responseDict = {"solved": solved , "results": resultList}
