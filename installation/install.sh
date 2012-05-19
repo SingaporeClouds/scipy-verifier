@@ -7,7 +7,7 @@ sudo gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9
 sudo gpg -a --export E084DAB9 | sudo apt-key add -
 sudo apt-get update
 sudo apt-get upgrade
-sudo apt-get install python-scipy python-rpy2 git python-setuptools python-dev build-essential libevent-dev python-gevent language-pack-id r-cran-runit
+sudo apt-get install python-scipy python-rpy2 git python-setuptools python-dev build-essential libevent-dev python-gevent language-pack-id r-cran-runit libgnustep-base-dev gobjc gnustep gnustep-make gnustep-common
 sudo easy_install gserver
 export LANGUAGE=en_US.UTF-8
 export LANG=en_US.UTF-8
@@ -24,10 +24,10 @@ cd scipy-verifier/installation
 sudo cp verifiers.conf /etc/init/verifiers.conf
 sudo initctl start verifiers
 #echo new cron into cron fil
-sudo echo "00 03 * * * sudo /usr/bin/python /home/server/scipy-verifier/installation/update.py" >> mycron
+#sudo echo "00 03 * * * sudo /usr/bin/python /home/server/scipy-verifier/installation/update.py" >> mycron
 #install new cron file
-sudo crontab mycron
-sudo rm mycron
-sudo python /home/server/scipy-verifier/installation/update.py
+#sudo crontab mycron
+#sudo rm mycron
+#sudo python /home/server/scipy-verifier/installation/update.py
 
 
