@@ -24,8 +24,10 @@ cp -rf /home/server/scipy-verifier/unity  /home/verifiers/unity
 chmod 777 -R /home/verifiers/unity
 chown verifiers:verifiers -R /home/verifiers
 cd scipy-verifier/installation
+sudo python /home/server/scipy-verifier/installation/cran.py
 sudo cp verifiers.conf /etc/init/verifiers.conf
 sudo initctl start verifiers
+
 #echo new cron into cron fil
 #sudo echo "00 03 * * * sudo /usr/bin/python /home/server/scipy-verifier/installation/update.py" >> mycron
 #install new cron file
