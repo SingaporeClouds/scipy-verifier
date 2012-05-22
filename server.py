@@ -69,6 +69,11 @@ htmlFile = open(folder+"/html/ObjetiveC.html")
 ObjetiveC_page_htm =  htmlFile.read()
 htmlFile.close()
 
+#load  C page
+htmlFile = open(folder+"/html/C.html")
+C_page_htm =  htmlFile.read()
+htmlFile.close()
+
 #scipy page handler
 @route("^/scipy_test$")
 def scipyPage(req):
@@ -83,6 +88,11 @@ def RPage(req):
 @route("^/objetivec_test$")
 def ObjetiveCPage(req):
     return [ObjetiveC_page_htm]
+
+#scipy page handler
+@route("^/c_test$")
+def CPage(req):
+    return [C_page_htm]
 
 #scipy veryfier handler
 @route("^/scipy$",method="GET,POST")
@@ -120,6 +130,28 @@ def ocVerifier(request):
         return [responseJSON]
     try:
         result = Command("/usr/bin/env","python",folder+"/verifiers/oc_verifier.py",jsonrequest,timeout=5)
+    except Empty:
+        s = "Your code took too long to return. Your solution may be stuck "+\
+            "in an infinite loop. Please try again."
+        result = json.dumps({"errors": s})
+        logging.error(s)
+        
+    return[result]
+
+#c veryfier handler
+@route("^/c$",method="GET,POST")
+def cVerifier(request):
+    #get post request
+    post_data = request.form_data
+    try:
+        jsonrequest = post_data["jsonrequest"][0]
+    except:
+        responseDict = {'errors': 'Bad request'}
+        responseJSON = json.dumps(responseDict)
+        logging.error("Bad request")
+        return [responseJSON]
+    try:
+        result = Command("/usr/bin/env","python",folder+"/verifiers/c_verifier.py",jsonrequest,timeout=5)
     except Empty:
         s = "Your code took too long to return. Your solution may be stuck "+\
             "in an infinite loop. Please try again."
