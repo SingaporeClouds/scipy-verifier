@@ -72,7 +72,7 @@ def runCInstance(jsonrequest,outQueue):
         return
     
     resultList = []
-    solved = True
+    solved = False
     
     uid = uuid.uuid4()
     test_path = '/home/verifiers/unity/test/'
@@ -105,6 +105,10 @@ def runCInstance(jsonrequest,outQueue):
         responseJSON = json.dumps(responseDict)
         outQueue.put(responseJSON)
         return
+    
+    if len(stdout)>0:
+        solved = True
+        
     for i in range(len(stdout)):
         parameters =  map(lambda x: x.strip(),stdout[i].split(":"))
         if len(parameters)<3:

@@ -7,7 +7,7 @@ sudo gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9
 sudo gpg -a --export E084DAB9 | sudo apt-key add -
 sudo apt-get update
 sudo apt-get upgrade
-sudo apt-get install python-scipy python-rpy2 git python-setuptools python-dev build-essential libevent-dev python-gevent language-pack-id r-cran-runit libgnustep-base-dev gobjc gnustep gnustep-make gnustep-common
+sudo apt-get install python-scipy python-rpy2 git python-setuptools python-dev build-essential libevent-dev python-gevent language-pack-id r-cran-runit libgnustep-base-dev  gobjc gnustep gnustep-make gnustep-common ruby
 sudo easy_install gserver
 export LANGUAGE=en_US.UTF-8
 export LANG=en_US.UTF-8
