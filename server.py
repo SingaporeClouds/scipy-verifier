@@ -14,7 +14,7 @@ from gserver.request import parse_vals
 from gserver.wsgi import WSGIServer
 from Queue import Empty,Queue
 from threading import Thread
-
+import base64
 
 def Command(*cmd,**kwargs):
 
@@ -75,111 +75,71 @@ C_page_htm =  htmlFile.read()
 htmlFile.close()
 
 #scipy page handler
-@route("^/scipy_test$")
+@route("^/test/scipy$")
 def scipyPage(req):
     return [scipy_page_htm]
 
 #R page handler
-@route("^/R_test$")
+@route("^/test/r$")
 def RPage(req):
     return [R_page_htm]
 
 #scipy page handler
-@route("^/objetivec_test$")
+@route("^/test/oc$")
 def ObjetiveCPage(req):
     return [ObjetiveC_page_htm]
 
 #scipy page handler
-@route("^/c_test$")
+@route("^/test/c$")
 def CPage(req):
     return [C_page_htm]
 
-#scipy veryfier handler
-@route("^/scipy$",method="GET,POST")
-def scipyVerifier(request):
-    #get post request
-    post_data = request.form_data
-    try:
-        jsonrequest = post_data["jsonrequest"][0]
-    except:
-        responseDict = {'errors': 'Bad request'}
-        responseJSON = json.dumps(responseDict)
-        logging.error("Bad request")
-        return [responseJSON]
-    try:
-        result = Command("/usr/bin/env","python",folder+"/verifiers/scipy_verifier.py",jsonrequest,timeout=5)
-    except Empty:
-        s = "Your code took too long to return. Your solution may be stuck "+\
-            "in an infinite loop. Please try again."
-        result = json.dumps({"errors": s})
-        logging.error(s)
-        
-    return[result]
+verifiers_dict = {"r":"R_verifier.py",
+                  "c" : "c_verifier.py",
+                  "oc":"oc_verifier.py",
+                  "scipy":"scipy_verifier.py"
+                  }
 
-#objetive c veryfier handler
-@route("^/oc$",method="GET,POST")
-def ocVerifier(request):
-    #get post request
+@route("^/(?P<name>\w+)$",method="GET,POST")
+def verifier(request,name=None):
+    get_data  = request.query_data
     post_data = request.form_data
-    try:
-        jsonrequest = post_data["jsonrequest"][0]
-    except:
-        responseDict = {'errors': 'Bad request'}
-        responseJSON = json.dumps(responseDict)
-        logging.error("Bad request")
-        return [responseJSON]
-    try:
-        result = Command("/usr/bin/env","python",folder+"/verifiers/oc_verifier.py",jsonrequest,timeout=5)
-    except Empty:
-        s = "Your code took too long to return. Your solution may be stuck "+\
-            "in an infinite loop. Please try again."
-        result = json.dumps({"errors": s})
-        logging.error(s)
-        
-    return[result]
-
-#c veryfier handler
-@route("^/c$",method="GET,POST")
-def cVerifier(request):
-    #get post request
-    post_data = request.form_data
-    try:
-        jsonrequest = post_data["jsonrequest"][0]
-    except:
-        responseDict = {'errors': 'Bad request'}
-        responseJSON = json.dumps(responseDict)
-        logging.error("Bad request")
-        return [responseJSON]
-    try:
-        result = Command("/usr/bin/env","python",folder+"/verifiers/c_verifier.py",jsonrequest,timeout=5)
-    except Empty:
-        s = "Your code took too long to return. Your solution may be stuck "+\
-            "in an infinite loop. Please try again."
-        result = json.dumps({"errors": s})
-        logging.error(s)
-        
-    return[result]
+    run = True
+    if not name in  verifiers_dict:
+        result = {'errors': 'verifier not exist'}
+        logging.error("verifier not found")
+    else:    
+        #get post request
+        if "jsonrequest" in post_data:
+            jsonrequest = post_data["jsonrequest"][0]
+        elif "jsonrequest" in get_data:
+            try:
+                jsonrequest = base64.b64decode(get_data["jsonrequest"][0])
+            except:
+                result = {'errors': 'Bad request'}
+                logging.error("Bad request")
+                run = False
+        else :
+            result = {'errors': 'Bad request'}
+            logging.error("Bad request")
+            run = False
+        if run:
+            try:
+                result = json.loads(Command("/usr/bin/env","python",folder+"/verifiers/%s"%verifiers_dict[name],jsonrequest,timeout=5))
+            except Empty:
+                s = "Your code took too long to return. Your solution may be stuck "+\
+                    "in an infinite loop. Please try again."
+                result = {"errors": s}
+                logging.error(s)
     
-@route("^/r$",method="GET,POST")
-def RVerifier(request):
-    #get post request
-    post_data = request.form_data
-    try:
-        jsonrequest = post_data["jsonrequest"][0]
-    except:
-        responseDict = {'errors': 'Bad request'}
-        responseJSON = json.dumps(responseDict)
-        logging.error("Bad request")
-        return [responseJSON]
-    try:
-        result = Command("/usr/bin/env","python",folder+"/verifiers/R_verifier.py",jsonrequest,timeout=5)
-    except Empty:
-        s = "Your code took too long to return. Your solution may be stuck "+\
-            "in an infinite loop. Please try again."
-        result = json.dumps({"errors": s})
-        logging.error(s)
+    if  "key" in get_data:
+        result["key"] = get_data["key"];
+    result = json.dumps(result)
+    if  "vcallback" in get_data:
+        callback = get_data["vcallback"][0]
+        return[callback+"("+result+")"]
     return[result]
-    
+        
 if __name__ == '__main__':
     sys.stderr = open(folder+"/error_log","a")
     sys.stdout = open(folder+"/log","a")
