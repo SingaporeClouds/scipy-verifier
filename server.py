@@ -59,6 +59,11 @@ htmlFile = open(folder+"/html/scipy.html")
 scipy_page_htm =  htmlFile.read()
 htmlFile.close()
 
+#load mobile
+htmlFile = open(folder+"/html/mobile.html")
+mobile_page_htm =  htmlFile.read()
+htmlFile.close()
+
 #load R page
 htmlFile = open(folder+"/html/R.html")
 R_page_htm =  htmlFile.read()
@@ -73,6 +78,11 @@ htmlFile.close()
 htmlFile = open(folder+"/html/C.html")
 C_page_htm =  htmlFile.read()
 htmlFile.close()
+
+#scipy page handler
+@route("^/test/mobile$")
+def mobilePage(req):
+    return [mobile_page_htm]
 
 #scipy page handler
 @route("^/test/scipy$")

@@ -1,0 +1,523 @@
+<html>
+
+<head>
+<link rel="stylesheet" href="http://twitter.github.com/bootstrap/1.3.0/bootstrap.min.css" type="text/css">
+<link rel="stylesheet"  href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" type="text/css"/>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
+<script>
+	
+	function __millisecondsToStr(milliseconds){
+    // TIP: to find current time in milliseconds, use:
+    // var milliseconds_now = new Date().getTime();
+
+    var seconds = milliseconds / 1000;
+    var numyears = Math.floor(seconds / 31536000);
+    if(numyears){
+        return numyears + ' year' + ((numyears > 1) ? 's' : '');
+    }
+    var numdays = Math.floor((seconds % 31536000) / 86400);
+    if(numdays){
+        return numdays + ' day' + ((numdays > 1) ? 's' : '');
+    }
+    var numhours = Math.floor(((seconds % 31536000) % 86400) / 3600);
+    if(numhours){
+        return numhours + ' hour' + ((numhours > 1) ? 's' : '');
+    }
+    var numminutes = Math.floor((((seconds % 31536000) % 86400) % 3600) / 60);
+    if(numminutes){
+        return numminutes + ' minute' + ((numminutes > 1) ? 's' : '');
+    }
+    var numseconds = (((seconds % 31536000) % 86400) % 3600) % 60;
+    if(numseconds){
+        return  Math.floor(numseconds) + ' second' + ((numseconds > 1) ? 's' : '');
+    }
+    return 'less then a second'; //'just now' //or other string you like;
+	}
+
+    //get_size of a associate array
+    
+	Object.size = function(obj) {
+		var size = 0, key;
+		for (key in obj) {
+			if (obj.hasOwnProperty(key)) size++;
+		}
+		return size;
+	};
+	//pool of request
+	var pool = {};
+	//job queue
+	var jobs = new Array();
+	//job dictionary
+	var job_dict = {};
+	//mac active items in the pool
+	var max_items = 10;
+	
+	//contine adding item to the pool
+	var continue_add = true;
+	
+
+	//nonErrorResults
+	var nonErrorResults = {};
+	
+	//permutation counters
+	var total_jobs  = 0;
+	var finished_jobs = 0;
+	var good_jobs = 0;
+	var error_jobs = 0;
+	var fail_jobs = 0;
+	var start_time = 0;
+	var end_time = 0;
+	var progressbar = 0;
+	//perm cahce
+	var perms_cache = {};
+	
+	function reset(){
+		if (Object.size(pool)>0){
+			alert("I can not reset if there are Jobs runing, please pause first");
+			check_ui();
+			return;
+		}
+		pool = {};
+		jobs = [];
+		job_dict = {};
+		nonErrorResults = {};
+		bad_permutations  = 0;
+		good_permutations = 0;
+		done_permutations = 0;
+		continue_add = true;
+		total_jobs  = 0;
+		finished_jobs = 0;
+		good_jobs = 0;
+		error_jobs = 0;
+		fail_jobs = 0;
+		progressbar = 0;
+		start_time = 0;
+		end_time = 0;
+		check_ui();
+	}
+	
+	function start(){
+		if (Object.size(pool)>0){
+			alert("I can not start if there are jobs in progress");
+			check_ui();
+			return;
+		}
+		reset();
+		create_jobs();
+		pool_check();
+	}
+	
+	function pause(){
+		continue_add = false;
+	}
+	function _continue(){
+		continue_add = true;
+		pool_check();
+		check_ui();
+		
+	}
+	function check_ui(){
+		pool_len = Object.size(pool);	
+		//set stats
+		jQuery("#total_jobs").text(total_jobs);
+		jQuery("#finished_jobs").text(finished_jobs);
+		jQuery("#good_jobs").text(good_jobs);
+		jQuery("#error_jobs").text(error_jobs);
+		jQuery("#fail_jobs").text(fail_jobs);
+		jQuery("#nonErrorResults").text(JSON.stringify(nonErrorResults));
+		if(total_jobs<0){
+			progressbar = 0;
+		}
+		else{
+			progressbar = finished_jobs/total_jobs*100;
+		}
+		left_time = ((end_time-start_time)/finished_jobs)*(total_jobs-finished_jobs);
+		
+		
+		jQuery("#progressbar").progressbar({ value: progressbar });
+		jQuery("#time").text("Time to go in: "+__millisecondsToStr(left_time));
+		if (pool_len>0){
+			if(continue_add){
+				//active pause
+				jQuery("#start").val("Pause");	
+				jQuery("#start").removeClass("info");
+				jQuery("#start").removeClass("success");
+				jQuery("#start").addClass("danger");
+				jQuery("#start").attr("onclick","pause()");
+			}
+			else{
+				//pausing
+				jQuery("#start").val("Pausing....");	
+				jQuery("#start").removeClass("danger");
+				jQuery("#start").removeClass("success");
+				jQuery("#start").removeClass("info");
+				jQuery("#start").attr("onclick","");
+			}
+			
+		}
+	   else{
+	   	    if(jobs.length>0){
+	   	    	jQuery("#start").val("Continue");	
+				jQuery("#start").removeClass("danger");
+				jQuery("#start").removeClass("success");
+				jQuery("#start").addClass("info");
+				jQuery("#start").attr("onclick","_continue()")
+	   	    }
+	   	    else{
+		   		job_len = Object.size(job_dict);
+		   		if(job_len>0){
+		   			jQuery("#start").val("Done!");	
+					jQuery("#start").removeClass("danger");
+					jQuery("#start").removeClass("info");
+					jQuery("#start").addClass("success");
+					jQuery("#start").attr("onclick","")	
+		   			
+		   		}
+		   		else{
+		   			jQuery("#start").val("start");	
+					jQuery("#start").removeClass("danger");
+					jQuery("#start").removeClass("success");
+					jQuery("#start").addClass("info");
+					jQuery("#start").attr("onclick","start()")	
+		   		}
+			}
+		}
+		
+	}
+	function create_jobs(){
+		//create the list of jobs that will be request to the server
+		 var lines;
+         var lines2;
+         var num_of_lines;
+         var idx;
+         var sub_line;
+         var perms;
+         var i;
+         var j;
+         var new_job;
+         var host = "http://"+jQuery("#host").val()+"/"+jQuery("#verifier").val();
+  		 var tests = lines = jQuery("#tests").val();
+  		 var jsonrequest;
+  		 var solution;
+  		 
+		 lines = jQuery("#solutions").val().split("\n");
+		 
+         lines2 = new Array();
+         
+         for (sub_line in lines){
+         	if(jQuery.trim(lines[sub_line])==""){
+         		continue;
+             }
+             lines2.push(jQuery.trim(lines[sub_line]));
+         }
+         
+         lines = lines2; 
+        
+		 num_of_lines = lines.length;
+                 
+         perms = get_perm(num_of_lines);
+         
+         for(i in perms){
+         	
+         	solution = "";
+         	
+         	for(j in perms[i]){
+         		solution = solution + lines[perms[i][j]-1]  + "\n";
+         	}
+         	
+         	jsonrequest = {"solution":solution,"tests":tests};
+         	
+         	new_job = { "jsonrequest":btoa(JSON.stringify(jsonrequest)),
+         				"intents": 0,
+         				"start_time":0,
+         				"end_time":0,
+         				"key": perms[i].join(""),
+         				"request_url": host,
+         			    "success": function(data){
+         			        var good_response = true;
+         			        key = data.key;
+         			        check_ui();
+							var date = new Date();
+         			        delete data.key;
+         			        
+         			    	if ("errors" in data){
+         			    		error_jobs    		   = error_jobs + 1;
+         			    		finished_jobs   	   = finished_jobs + 1;
+         			    		job_dict[key].end_time = date.getTime();
+         			    		if(end_time<job_dict[key].end_time){
+         			    			end_time = job_dict[key].end_time;
+         			    		}
+         			    		if(start_time>job_dict[key].start_time||start_time==0){
+         			    			start_time = job_dict[key].start_time;
+         			    		}
+         			    	}
+         			    	else if("solved" in data){
+         			    		if (data.solved){
+	         			    		 nonErrorResults[key] = JSON.stringify(data);
+	         			    		 good_jobs = good_jobs + 1;
+	         			    		 finished_jobs = finished_jobs + 1;
+	         			    		 job_dict[key].end_time = date.getTime();
+	         			    		 if(end_time<job_dict[key].end_time){
+	         			    		 	end_time = job_dict[key].end_time;
+	         			    		 	}
+	         			    		 if(start_time>job_dict[key].start_time||start_time==0){
+	         			    		 	start_time = job_dict[key].start_time;
+	         			    		 }
+	         			    	}
+	         			    	else{
+	         			    		error_jobs  = error_jobs + 1;
+         			    			finished_jobs = finished_jobs + 1;
+         			    			job_dict[key].end_time = date.getTime();
+         			    			if(end_time<job_dict[key].end_time){
+	         			    		 	end_time = job_dict[key].end_time;
+	         			    		 	}
+	         			    		 if(start_time>job_dict[key].start_time||start_time==0){
+	         			    		 	start_time = job_dict[key].start_time;
+	         			    		 }
+	         			    	}
+         			    	}
+         			    	else{
+         			    		console.log("Error2");
+         			    		good_response = false;
+         			    	}
+         			    	if(good_response){
+         			    		console.log(key)
+         			    		delete pool[key];
+         			        	pool_check();
+         			        }
+         			        check_ui();
+         			    },
+         			    "error": function(){
+         			    	console.log("Error");
+         			    	check_ui();
+         			     }
+         				} ;
+         				
+         	jobs.push(new_job);
+         	job_dict[new_job.key] = new_job;
+         }
+         
+         total_jobs = Object.size(job_dict);
+       
+                     
+	} 
+	
+
+	function pool_check(){
+		if (!continue_add){
+			return;
+		}
+		var new_items;
+		var i=0;
+		var left_jobs = jobs.length;
+		var current;
+		if(Object.size(pool)<max_items){
+			new_items = max_items  - Object.size(pool);
+			while(i<new_items){
+				if(left_jobs == 0){break;}
+				current = jobs[i];
+				console.log(current);
+				jobs.splice(i,1);
+				pool[current.key] = current;
+				execute(current);
+				left_jobs = left_jobs - 1;
+				i = i + 1;
+			}
+			
+		}
+		
+	}
+	
+	function execute(job){
+		check_ui();
+		var date = new Date();
+		job.start_time = date.getTime();
+		jQuery.ajax({url: job.request_url,
+					 data:{"jsonrequest":job.jsonrequest,"key":job.key},
+					 dataType: 'jsonp',
+					 jsonp: 'vcallback',
+					 timeout:max_items*1000+10*1000,
+					 crossDomain:true,
+					 error:job.error,
+					 success:job.success
+					});	
+	}
+	
+   
+    
+    function permute(a,b){
+    	var ret = new Array();
+    	var sub_ret = {};
+    	var element;
+    	var P1;
+    	var P2;
+    	var P1_JOIN;
+    	var P2_JOIN;
+    	for(element_a in a){
+    		for(element_b in b){
+    			if(b[element_b].indexOf(a[element_a][0])>=0){
+    				continue;
+    			}
+    			P1 = a[element_a].concat(b[element_b]);
+    			P2  = b[element_b].concat(a[element_a]);
+    			P1_JOIN = P1.join('');
+    			if ( P1_JOIN in sub_ret){
+    				continue;
+    			}
+    			else{
+    				ret.push(P1);
+    				sub_ret[P1_JOIN] = true;
+    				
+    			}
+    			P2_JOIN = P2.join('');
+    			if (P2_JOIN in sub_ret){
+    				continue;
+    			}
+    			else{
+    			
+    			ret.push(P2);
+    			
+    			sub_ret[P2_JOIN] = true;
+    			}
+    			
+    		}
+    	}
+    	return ret;
+    }
+    
+	function get_perm(n){
+		var i;
+		var range;
+		var permute_elementes;
+		var ret2;
+		var both;
+		var topadditional;
+		topadditional = 0;
+		limit = n;
+		if (n>7){
+			both = parseInt((n-7)/2);
+			topadditional = (n-7)%2 + both;
+			limit = topadditional + 7;
+		}
+		
+		i = 1 +topadditional;
+		range = new Array();
+		while(i<=limit){
+			range.push([i])
+			i = i +1;
+		}
+		
+		ret2  = JSON.parse(JSON.stringify(range));
+		permute_elementes = JSON.parse(JSON.stringify(range));
+		
+		i = 0;
+		while(i<(range.length-1)){
+			permute_elementes = JSON.parse(JSON.stringify(permute(range,permute_elementes)));
+			ret2 = ret2.concat(permute_elementes);
+			i = i +1;
+		}
+		return ret2;
+		
+	}
+	
+	function show_perms(){
+                 var lines;
+                 var lines2;
+                 var num_of_lines;
+                 var idx;
+                 var sub_line;
+  
+		 lines = jQuery("#solutions").val().split("\n");
+                 lines2 = new Array();
+                 for (sub_line in lines){
+                      if(jQuery.trim(lines[sub_line])==""){
+                         continue;
+                      }
+                   lines2.push(jQuery.trim(lines[sub_line]));
+                 }
+                 lines = lines2; 
+        
+		 num_of_lines = lines.length;
+                 
+                 idx = "" + num_of_lines;
+                 if (!(idx in perms_cache)){
+			perms_cache[idx]  = get_perm(num_of_lines).length;
+                     
+		}
+		jQuery("#current_lines").text(num_of_lines);
+		jQuery("#current_permutations").text(perms_cache[idx]);
+	}
+ jQuery().ready(function(){
+        show_perms();
+        jQuery("#progressbar").progressbar({ value: 0});
+    }); 
+</script>
+
+</head>	
+
+<body>
+	<div id="content" style="margin:auto;width: 60%; text-align: center; margin-top: 40px;">
+		<table>
+		<tr>
+			<td style="text-align: center;">
+			<label for="host" style="float:none;">http://</label>
+			<input id="host" type="text" value="23.23.196.74" style="height: 28px; text-align: right;"/>/
+			 <select id="verifier">
+				<option>r</option>
+				<option>scipy</option>
+				<option>c</option>
+				<option>oc</option>
+			</select>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				Solution:<br>
+				<textarea id="solutions" onchange="show_perms();" onkeydown="show_perms();" style="width: 100%;height: 250px;">factorial <- function(n){
+  if (n == 0) {return(1)}
+  else {  return(n * factorial(n - 1)) }
+}
+				
+				</textarea>
+			</td>
+		</tr>
+		<td>
+			Tests:<br>
+		<textarea id="tests" style="width: 100%;height: 250px;">
+>>> checkEquals(6, factorial(3))
+	True
+</textarea>
+		</td>
+		</tr>
+		<tr>
+		<td style="text-align: right;">
+		<span>Lines: </span><span id="current_lines"> 0</span>
+		<span>Permutation: </span><span id="current_permutations"> 0</span>
+		<input type="button" onclick="start();" style="float:none;"class="btn info" id="start" value="Start" />
+		<input type="button" onclick="reset();" style="float:none;"class="btn danger" id="reset" value="Reset" />
+		</td>
+		</tr>
+	</div>
+	<tr>
+		<td>
+			<span id="total_jobs"></span> total jobs   
+			<span id="finished_jobs"></span> finished jobs  
+			<span id="good_jobs" style="color: green"></span> good jobs    
+			<span id="error_jobs"></span> error jobs     
+			<span id="fail_jobs" style="color:red"></span> fail jobs    
+			<div id="progressbar"></div>
+			<div id="time" style="text-align: center"></div>
+			
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<div> so far nonErrorResults</div>
+			<div id="nonErrorResults" style="text-align: center"></div>
+			
+		</td>
+	</tr>
+	</table>
+</body>
+</html>
