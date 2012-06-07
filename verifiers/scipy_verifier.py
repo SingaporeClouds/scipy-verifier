@@ -42,7 +42,7 @@ def runScipyInstance(jsonrequest,outQueue):
     try:
         # import numpy testing and execute solution 
         namespace = {}
-        compiled = compile("from numpy.testing import *", 'submitted code', 'exec')
+        compiled = compile("from numpy.testing import *\nimport numpy\nimport scipy", 'submitted code', 'exec')
         exec compiled in namespace
         compiled = compile(solution, 'submitted code', 'exec')
         exec compiled in namespace
