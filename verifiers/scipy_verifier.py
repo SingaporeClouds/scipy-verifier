@@ -64,6 +64,8 @@ def runScipyInstance(jsonrequest,outQueue):
         return
     
     results = execute_test_cases(test_cases, namespace,ExecutionError)
+    if results==None:
+        return
     sys.stdout = oldfile
     printed = newfile.getvalue()
     results["printed"] = printed
