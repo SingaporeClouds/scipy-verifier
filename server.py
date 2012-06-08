@@ -142,12 +142,12 @@ def verifier(request,name=None):
                 result = {"errors": s}
                 logging.error(s)
     
-    if  "key" in get_data:
-        result["key"] = get_data["key"];
     result = json.dumps(result)
+    
     if  "vcallback" in get_data:
         callback = get_data["vcallback"][0]
         return[callback+"("+result+")"]
+    
     return[result]
         
 if __name__ == '__main__':

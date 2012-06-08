@@ -114,13 +114,19 @@
 							 "tests":">>> assert_almost_equal(sol, 0.87752449938946964)\nTrue"},
 					"oc":{"solution":"int b=2;\nfloat f = 123.45;\ndouble inches = 3*2;\nNSString *string1 = @\"This string is immutable\";",
 						  "tests":"AssertEquals(2, b);\nint expected_b = 2;\nAssertEquals(expected_b, b);\nAssertEquals((float)123.45, f);\nAssertEquals([NSString stringWithString:@\"This string is immutable\"], string1);"},
-					"c":{ "solution":"int sum(int a, int b){\nreturn a+b;\n}\nchar *message = \"Hello world!!!\";\nconst char *testStrings[] = { \"foo\", \"boo\", \"woo\", \"zoo\" };",
+					"c":{ "solution":"int sum(int a, int b){return a+b;}\nchar *message = \"Hello world!!!\";\nconst char *testStrings[] = { \"foo\", \"boo\", \"woo\", \"zoo\" };",
 						  "tests" :  "void test_sum(void){TEST_ASSERT(5==sum(2,3));}\nvoid test_hello_world(void){TEST_ASSERT_EQUAL_STRING(message, \"Hello world!!!\");}\nvoid testNotEqualStringArray1(void){ const char *expStrings[] = { \"foo\", \"boo\", \"woo\", \"zoo\" };\nTEST_ASSERT_EQUAL_STRING_ARRAY(expStrings, testStrings, 4);}" },	  
 		             "r":{"solution":"factorial <- function(n){\n if (n == 0) {return(1)}\n else {  return(n * factorial(n - 1)) }\n}",
 		                  "tests":">>> checkEquals(6, factorial(3))\nTrue"}
 					}
-	   jQuery("#solutions").val(dict[verifier].solution);
-	   jQuery("#tests").val(dict[verifier].tests);
+	   if(verifier in dict){
+		   jQuery("#solutions").val(dict[verifier].solution);
+		   jQuery("#tests").val(dict[verifier].tests);
+		}
+		else{
+			jQuery("#solutions").val("");
+		    jQuery("#tests").val("");
+		}
 		
 	}
 	function pause(){
@@ -216,6 +222,7 @@
   		 var tests = lines = jQuery("#tests").val();
   		 var jsonrequest;
   		 var solution;
+  		 var call_back;
   		 
 		 lines = jQuery("#solutions").val().split("\n");
 		 
@@ -244,7 +251,21 @@
          	
          	jsonrequest = {"solution":solution,"tests":tests};
          	
-         	new_job = { "jsonrequest":btoa(JSON.stringify(jsonrequest)),
+         	var dict = {"scipy":true,
+					"oc":true,
+					"c":true,	  
+		             "r":true
+					}
+			if(jQuery("#verifier").val() in dict){
+				call_back = "vcallback";
+				jsonrequest = btoa(JSON.stringify(jsonrequest));
+			}
+			else{
+				call_back = "callback";
+				jsonrequest = JSON.stringify(jsonrequest);
+			}
+         	new_job = { "jsonrequest":jsonrequest,
+         	            "callback":call_back,
          				"intents": 0,
          				"start_time":0,
          				"end_time":0,
@@ -252,10 +273,11 @@
          				"request_url": host,
          			    "success": function(data){
          			        var good_response = true;
-         			        var key = data.key;
+         			        var rx 	      = new RegExp("&key=([0-9]+)&", "g");
+							var match     = rx.exec(this.url);
+							var key       = match[1];
          			        check_ui();
 							var date = new Date();
-         			        delete data.key;
          			        
          			    	if ("errors" in data){
          			    		error_jobs    		   = error_jobs + 1;
@@ -269,29 +291,18 @@
          			    		}
          			    	}
          			    	else if("solved" in data){
-         			    		if (data.solved){
-	         			    		 nonErrorResults[key] = JSON.stringify(data);
-	         			    		 good_jobs = good_jobs + 1;
-	         			    		 finished_jobs = finished_jobs + 1;
-	         			    		 job_dict[key].end_time = date.getTime();
-	         			    		 if(end_time<job_dict[key].end_time){
+	         			    		nonErrorResults[key] = JSON.stringify(data);
+	         			    		good_jobs = good_jobs + 1;
+	         			    		
+	         			    		finished_jobs = finished_jobs + 1;
+	         			    		job_dict[key].end_time = date.getTime();
+	         			    	    if(end_time<job_dict[key].end_time){
 	         			    		 	end_time = job_dict[key].end_time;
 	         			    		 	}
-	         			    		 if(start_time>job_dict[key].start_time||start_time==0){
+	         			    		if(start_time>job_dict[key].start_time||start_time==0){
 	         			    		 	start_time = job_dict[key].start_time;
 	         			    		 }
-	         			    	}
-	         			    	else{
-	         			    		error_jobs  = error_jobs + 1;
-         			    			finished_jobs = finished_jobs + 1;
-         			    			job_dict[key].end_time = date.getTime();
-         			    			if(end_time<job_dict[key].end_time){
-	         			    		 	end_time = job_dict[key].end_time;
-	         			    		 	}
-	         			    		 if(start_time>job_dict[key].start_time||start_time==0){
-	         			    		 	start_time = job_dict[key].start_time;
-	         			    		 }
-	         			    	}
+	         			    	
          			    	}
          			    	else{
 	         			    	fail_jobs     = fail_jobs + 1;
@@ -375,10 +386,11 @@
 		check_ui();
 		var date = new Date();
 		job.start_time = date.getTime();
+		
 		jQuery.ajax({url: job.request_url,
 					 data:{"jsonrequest":job.jsonrequest,"key":job.key},
 					 dataType: 'jsonp',
-					 jsonp: 'vcallback',
+					 jsonp: job.callback,
 					 timeout:max_items*1000+10*1000,
 					 crossDomain:true,
 					 error:job.error,
@@ -511,6 +523,9 @@
 				<option>c</option>
 				<option>oc</option>
 			</select>
+			<input id="other" type="text" placeholder="other verifier" style="height: 28px; text-align: right;"/>
+			<input id="add_other" type="button" class="btn" onclick="jQuery('#verifier').append(jQuery('<option>'+jQuery('#other').val()+'</option>'))" placeholder="other verifier"  value="add" style="height: 28px; text-align: right;"/>
+			
 			</td>
 		</tr>
 		<tr>
