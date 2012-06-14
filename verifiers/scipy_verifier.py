@@ -48,8 +48,6 @@ def runScipyInstance(jsonrequest,outQueue):
         exec compiled in namespace
         namespace['YOUR_SOLUTION'] = solution.strip()
         namespace['LINES_IN_YOUR_SOLUTION'] = len(solution.strip().splitlines())
-    except TimeoutException:
-        return
     except:
         ExecutionError()
         return
@@ -57,8 +55,6 @@ def runScipyInstance(jsonrequest,outQueue):
     #get tests
     try:
         test_cases = doctest.DocTestParser().get_examples(tests)
-    except TimeoutException:
-        return
     except:
         ExecutionError()
         return

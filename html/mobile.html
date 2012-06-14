@@ -54,6 +54,8 @@
 	//perm cahce
 	var perms_cache = {};
 	
+	var stop = false;
+	
 	function reset(){
 		//reset gobal vars
 		if (Object.size(pool)>0){
@@ -77,6 +79,7 @@
 		progressbar = 0;
 		start_time = 0;
 		end_time = 0;
+		stop = false;
 		jQuery("#fails").html("<tr><th>Error</th><th>Permutation</th><th>code</th><tr>");
 		jQuery("#nonErrorResults_visual").empty();
 		check_ui();
@@ -112,7 +115,7 @@
          	if(jQuery.trim(lines[sub_line])==""){
          		continue;
              }
-             lines2.push(jQuery.trim(lines[sub_line]));
+             lines2.push(lines[sub_line]);
          }
          
          lines = lines2; 
@@ -134,7 +137,8 @@
          	var dict = {"scipy":true,
 					    "oc":true,
 					    "c":true,	  
-		                "r":true
+		                "r":true,
+		                "python":true
 		               }
 			
 			if(jQuery("#verifier").val() in dict){
@@ -253,6 +257,7 @@
          			    	else{
          			    		var height = 24*key.length;
          			    		jQuery("#fails").append(jQuery("<tr><td>"+textStatus+"</td><td>"+key+"</td><td><textarea style='width:100%; height:"+height+"px'>"+JSON.parse(atob(job_dict[key].jsonrequest)).solution+"</textarea></td></tr>"))
+         			    		stop = true;
          			    	}
          			    	delete pool[key];
          			    	var whost = job_dict[key].dump_url;
@@ -495,7 +500,9 @@
 					"c":{ "solution":"int sum(int a, int b){return a+b;}\nchar *message = \"Hello world!!!\";\nconst char *testStrings[] = { \"foo\", \"boo\", \"woo\", \"zoo\" };",
 						  "tests" :  "void test_sum(void){TEST_ASSERT(5==sum(2,3));}\nvoid test_hello_world(void){TEST_ASSERT_EQUAL_STRING(message, \"Hello world!!!\");}\nvoid testNotEqualStringArray1(void){ const char *expStrings[] = { \"foo\", \"boo\", \"woo\", \"zoo\" };\nTEST_ASSERT_EQUAL_STRING_ARRAY(expStrings, testStrings, 4);}" },	  
 		             "r":{"solution":"factorial <- function(n){\n if (n == 0) {return(1)}\n else {  return(n * factorial(n - 1)) }\n}",
-		                  "tests":">>> checkEquals(6, factorial(3))\nTrue"}
+		                  "tests":">>> checkEquals(6, factorial(3))\nTrue"},
+		             "python":{"solution":"number = 2\nwizard = 'Oz'\ndef addOne(x):\n return x+1",
+		                  "tests":">>> number\n 2\n>>> wizard\n 'Oz'\n>>> addOne(2)\n  3"}
 					}
 	   if(verifier in dict){
 		   jQuery("#solutions").val(dict[verifier].solution);
@@ -561,6 +568,7 @@
 		jQuery("#progressbar").progressbar({ value: progressbar });
 		jQuery("#time").text("Time to go in: "+__millisecondsToStr(left_time));
 		if (pool_len>0){
+			jQuery("#verifier").attr("disabled","true");
 			if(continue_add){
 				//active pause
 				jQuery("#start").val("Pause");	
@@ -581,13 +589,26 @@
 		}
 	   else{
 	   	    if(jobs.length>0){
-	   	    	jQuery("#start").val("Continue");	
-				jQuery("#start").removeClass("danger");
-				jQuery("#start").removeClass("success");
-				jQuery("#start").addClass("info");
-				jQuery("#start").attr("onclick","_continue()")
+	   	    	jQuery("#verifier").attr("disabled","true");
+	   	    	if(stop){
+	   	    		jQuery("#start").val("Error");	
+					jQuery("#start").removeClass("info");
+					jQuery("#start").removeClass("success");
+					jQuery("#start").addClass("danger");
+				    jQuery("#start").attr("")
+	   	    		
+	   	    	}
+	   	    	else{
+	   	    		jQuery("#start").val("Continue");	
+					jQuery("#start").removeClass("danger");
+					jQuery("#start").removeClass("success");
+					jQuery("#start").addClass("info");
+					jQuery("#start").attr("onclick","_continue()")	
+	   	    	}
+	   	    	
 	   	    }
 	   	    else{
+	   	    	jQuery("#verifier").removeAttr("disabled");
 		   		job_len = Object.size(job_dict);
 		   		if(job_len>0){
 		   			jQuery("#start").val("Done!");	
@@ -610,6 +631,9 @@
 	}
 	
 	function pool_check(){
+		if (stop){
+			return;
+		}
 		
 		if (!continue_add){
 			return;
@@ -768,6 +792,7 @@
 									<option>scipy</option>
 									<option>c</option>
 									<option>oc</option>
+									<option>python</option>
 									<option>others</option>
 								</select>
 								<div id="other_verifiers">

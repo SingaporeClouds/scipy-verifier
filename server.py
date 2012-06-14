@@ -59,6 +59,11 @@ htmlFile = open(folder+"/html/scipy.html")
 scipy_page_htm =  htmlFile.read()
 htmlFile.close()
 
+#load python page
+htmlFile = open(folder+"/html/python.html")
+scipy_page_htm =  htmlFile.read()
+htmlFile.close()
+
 #load mobile
 htmlFile = open(folder+"/html/mobile.html")
 mobile_page_htm =  htmlFile.read()
@@ -89,6 +94,12 @@ def mobilePage(req):
 def scipyPage(req):
     return [scipy_page_htm]
 
+
+#python page handler
+@route("^/test/python")
+def pythonPage(req):
+    return [scipy_page_htm]
+
 #R page handler
 @route("^/test/r$")
 def RPage(req):
@@ -107,7 +118,8 @@ def CPage(req):
 verifiers_dict = {"r":"R_verifier.py",
                   "c" : "c_verifier.py",
                   "oc":"oc_verifier.py",
-                  "scipy":"scipy_verifier.py"
+                  "scipy":"scipy_verifier.py",
+                  "python":"python_verifier.py"
                   }
 
 @route("^/(?P<name>\w+)$",method="GET,POST")
