@@ -61,6 +61,11 @@ htmlFile = open(folder+"/html/scipy.html")
 scipy_page_htm =  htmlFile.read()
 htmlFile.close()
 
+#load scipy page
+htmlFile = open(folder+"/html/jsp.html")
+jsp_page_htm =  htmlFile.read()
+htmlFile.close()
+
 #load python page
 htmlFile = open(folder+"/html/python.html")
 scipy_page_htm =  htmlFile.read()
@@ -117,6 +122,12 @@ def ObjetiveCPage(req):
 def CPage(req):
     return [C_page_htm]
 
+
+#scipy page handler
+@route("^/test/jsp$")
+def JSPPage(req):
+    return [jsp_page_htm]
+
 # get current commit
 @route("^/current/commit$")
 def get_current_commit(req):
@@ -124,11 +135,13 @@ def get_current_commit(req):
     mini_commit = commit[0:10]
     url = "<a href='https://github.com/SingaporeClouds/scipy-verifier/commit/"+commit+"'>"+mini_commit+"</a>"
     return ["Commit : "+url]
+
 verifiers_dict = {"r":"R_verifier.py",
                   "c" : "c_verifier.py",
                   "oc":"oc_verifier.py",
                   "scipy":"scipy_verifier.py",
-                  "python":"python_verifier.py"
+                  "python":"python_verifier.py",
+                  "jsp":"jsp_verifier.py"
                   }
 
 @route("^/(?P<name>\w+)$",method="GET,POST")
