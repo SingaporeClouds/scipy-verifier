@@ -15,6 +15,8 @@ from gserver.wsgi import WSGIServer
 from Queue import Empty,Queue
 from threading import Thread
 import base64
+import os
+os.chdir("/home/server/scipy-verifier")
 
 def Command(*cmd,**kwargs):
 
@@ -115,6 +117,13 @@ def ObjetiveCPage(req):
 def CPage(req):
     return [C_page_htm]
 
+# get current commit
+@route("^/current/commit$")
+def get_current_commit(req):
+    commit = os.popen("git rev-parse HEAD").read()
+    mini_commit = commit[0:10]
+    url = "<a href='https://github.com/SingaporeClouds/scipy-verifier/commit/"+commit+"'>"+mini_commit+"</a>"
+    return ["Commit : "+url]
 verifiers_dict = {"r":"R_verifier.py",
                   "c" : "c_verifier.py",
                   "oc":"oc_verifier.py",
