@@ -68,7 +68,7 @@ htmlFile.close()
 
 #load python page
 htmlFile = open(folder+"/html/python.html")
-scipy_page_htm =  htmlFile.read()
+python_page_htm =  htmlFile.read()
 htmlFile.close()
 
 #load mobile
@@ -105,7 +105,7 @@ def scipyPage(req):
 #python page handler
 @route("^/test/python")
 def pythonPage(req):
-    return [scipy_page_htm]
+    return [python_page_htm]
 
 #R page handler
 @route("^/test/r$")

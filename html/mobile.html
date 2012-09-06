@@ -86,6 +86,22 @@
 		return true;
 	}
 	
+	var replaceHtmlEntites = (function() {
+		  var translate_re = /( |&|\\|<|>)/g;
+		  var translate = {
+		    " "     : "&nbsp;", 
+		    "&"     : "&amp;", 
+		    "\""    : "&quot;", 
+		    "<"     : "&lt;", 
+		    ">"     : "&gt;"
+		  };
+		  return function(s) {
+		    return ( s.replace(translate_re, function(match, entity) { 
+		      return translate[entity]; 
+		    }) );
+		  }
+		})();
+	
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	//								Core
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -138,7 +154,8 @@
 					    "oc":true,
 					    "c":true,	  
 		                "r":true,
-		                "python":true
+		                "python":true,
+		                "jsp":true
 		               }
 			
 			if(jQuery("#verifier").val() in dict){
@@ -200,7 +217,7 @@
 	         			    		 	 }
 	         			    		 	 content = content + "<tr><td>"+data.results[i].call+"</td><td>"+data.results[i].expected+"</td><td>"+data.results[i].received+"</td><td style='color:white;background-color:"+color+"'>"+data.results[i].correct+"</td></tr>";
 	         			    		 }
-	         			    		 var header = '<div>Permutation '+key+'</div><pre>'+job_dict[key].solution+'</pre><table><tr><th>Call</th><th>Expected</th><th>Received</th><th>Correct</th></tr>';						
+	         			    		 var header = '<div>Permutation '+key+'</div><pre>'+replaceHtmlEntites(job_dict[key].solution)+'</pre><table><tr><th>Call</th><th>Expected</th><th>Received</th><th>Correct</th></tr>';						
 								
 								var footer = '</table><hr>';
          			    		
@@ -502,7 +519,9 @@
 		             "r":{"solution":"factorial <- function(n){\n if (n == 0) {return(1)}\n else {  return(n * factorial(n - 1)) }\n}",
 		                  "tests":">>> checkEquals(6, factorial(3))\nTrue"},
 		             "python":{"solution":"number = 2\nwizard = 'Oz'\ndef addOne(x):\n return x+1",
-		                  "tests":">>> number\n 2\n>>> wizard\n 'Oz'\n>>> addOne(2)\n  3"}
+		                  "tests":">>> number\n 2\n>>> wizard\n 'Oz'\n>>> addOne(2)\n  3"},
+		             "jsp":{"solution":"<%@ page import=\"java.util.*, java.text.*\" %><HTML><HEAD><TITLE>Hello Pineapples</TITLE></HEAD>\n<BODY><H1>Hello World</H1>\n<TABLE><TR><TD><P>This is an <B>embedded</B> table</P></TD></TR>\n<TR><TD>    The request parameter 'fruit' has a value of <%= request.getParameter(\"fruit\") %>\n</TD></TR></TABLE>\nToday is: <%= new SimpleDateFormat(\"dd/MM/yyyy\").format(new Date()) %>\n </BODY></HTML>",
+		                  "tests":"String expectedDate = new SimpleDateFormat(\"dd/MM/yyyy\").format(new Date());\npage().shouldHaveTitle(\"Hello Pineapples\");\npage().shouldContain(\"Today is: \"+expectedDate);\nonRequest(\"fruit\", \"guava\").page().shouldContain(\"The request parameter 'fruit' has a value of guava\");\npage().shouldContainElement(\"//TABLE/TR/TD/P/B\");\nelement(\"//TABLE/TR/TD/P/B\").shouldContain(\"embedded\");"}
 					}
 	   if(verifier in dict){
 		   jQuery("#solutions").val(dict[verifier].solution);
@@ -562,11 +581,12 @@
 			progressbar = finished_jobs/total_jobs*100;
 		}
 		left_time = ((end_time-start_time)/finished_jobs)*(total_jobs-finished_jobs);
-		
+		avg_time = ((end_time-start_time)/finished_jobs);
 		jQuery("#total_ne").text(Object.size(nonErrorResults));
 		
 		jQuery("#progressbar").progressbar({ value: progressbar });
 		jQuery("#time").text("Time to go in: "+__millisecondsToStr(left_time));
+		jQuery("#avg").text("Average time by request: "+__millisecondsToStr(avg_time));
 		if (pool_len>0){
 			jQuery("#verifier").attr("disabled","true");
 			if(continue_add){
@@ -757,7 +777,7 @@
 	
  jQuery().ready(function(){
         jQuery("#progressbar").progressbar({ value: 0});
-        new_ui_host("23.23.196.74")
+        new_ui_host("54.251.51.97")
         change_code();
         show_perms();
     }); 
@@ -793,6 +813,7 @@
 									<option>c</option>
 									<option>oc</option>
 									<option>python</option>
+									<option>jsp</option>
 									<option>others</option>
 								</select>
 								<div id="other_verifiers">
@@ -835,6 +856,7 @@
 			<span id="fail_jobs" style="color:red"></span> fail jobs    
 			<div id="progressbar"></div>
 			<div id="time" style="text-align: center"></div>
+			<div id="avg" style="text-align: center"></div>
 			
 		</td>
 	</tr>

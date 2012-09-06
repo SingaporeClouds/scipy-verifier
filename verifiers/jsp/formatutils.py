@@ -48,7 +48,7 @@ def parse_unit_test_results(rawoutput):
     currentresult = {}
     for line in rawoutput.split('\n'):
         if RE_CALL_LINE.match(line):
-            currentresult['line'] = str(RE_CALL_LINE.search(line).group(1))
+            currentresult['call'] = str(RE_CALL_LINE.search(line).group(1))
         elif RE_CORRECT_LINE.match(line):
             currentresult['correct'] = RE_CORRECT_LINE.search(line).group(1) == 'true'
             if not currentresult['correct']: solved = False
