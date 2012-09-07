@@ -9,8 +9,8 @@ import sys
 import StringIO
 from Queue import Queue
 import pwd
-from verifiers.jsp import formatutils
-from verifiers.jsp import shellutils
+from jsp import formatutils
+from jsp import shellutils
     
 def runJSPInstance(jsonrequest,outQueue):
     
