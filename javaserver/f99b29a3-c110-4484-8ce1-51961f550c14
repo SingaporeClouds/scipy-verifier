@@ -1,0 +1,1 @@
+<%@ page import="java.util.*, java.text.*" %><HTML><HEAD><TITLE>Hello Pineapples</TITLE></HEAD><BODY>	<H1>Hello World</H1><TABLE>	<TR><TD><P>This is an <B>embedded</B> table</P></TD></TR><TR><TD>The request parameter 'fruit' has a value of <%= request.getParameter("fruit") %></TD></TR></TABLE>Today is: <%= new SimpleDateFormat("dd/MM/yyyy").format(new Date()) %></BODY></HTML>

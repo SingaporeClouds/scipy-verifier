@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="lib/groovy-all-2.0.0.jar"/>
+	<classpathentry kind="lib" path="lib/hazelcast-2.1.2.jar"/>
+	<classpathentry kind="lib" path="lib/jackson-core-asl-1.9.4.jar"/>
+	<classpathentry kind="lib" path="lib/jackson-mapper-asl-1.9.4.jar"/>
+	<classpathentry kind="lib" path="lib/netty-3.5.0.Final.jar"/>
+	<classpathentry kind="lib" path="lib/rhino-1.7R4.jar"/>
+	<classpathentry kind="lib" path="lib/vertx-core-1.2.3.final.jar"/>
+	<classpathentry kind="lib" path="lib/vertx-lang-groovy-1.2.3.final.jar"/>
+	<classpathentry kind="lib" path="lib/vertx-lang-java-1.2.3.final.jar"/>
+	<classpathentry kind="lib" path="lib/vertx-lang-jruby-1.2.3.final.jar"/>
+	<classpathentry kind="lib" path="lib/vertx-lang-jython-1.2.3.final.jar"/>
+	<classpathentry kind="lib" path="lib/vertx-lang-rhino-1.2.3.final.jar"/>
+	<classpathentry kind="lib" path="lib/vertx-platform-1.2.3.final.jar"/>
+	<classpathentry kind="lib" path="lib/vertx-testframework-1.2.3.final.jar"/>
+	<classpathentry kind="lib" path="/home/server/scipy-verifier/verifiers/java/lib/json-smart-1.1.1.jar"/>
+	<classpathentry kind="lib" path="/home/server/scipy-verifier/verifiers/java/lib/log4j-1.2.17.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
+	<classpathentry kind="lib" path="libs/bsh-2.0b4.jar"/>
+	<classpathentry kind="lib" path="libs/json-smart-1.1.1.jar"/>
+	<classpathentry kind="lib" path="libs/log4j-1.2.17.jar"/>
+	<classpathentry kind="lib" path="libs/junit-4.11-SNAPSHOT-20120805-1225.jar"/>
+	<classpathentry kind="lib" path="libs/ant-1.6.5.jar"/>
+	<classpathentry kind="lib" path="libs/commons-el-1.0.jar"/>
+	<classpathentry kind="lib" path="libs/commons-logging-1.1.1.jar"/>
+	<classpathentry kind="lib" path="libs/jasper-compiler-5.5.15.jar"/>
+	<classpathentry kind="lib" path="libs/jasper-runtime-5.5.15.jar"/>
+	<classpathentry kind="lib" path="libs/jaxen-1.1.1.jar"/>
+	<classpathentry kind="lib" path="libs/jsp-api-2.0.jar"/>
+	<classpathentry kind="lib" path="libs/jsptest-fork-0.0.1-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="libs/jstl-1.1.2.jar"/>
+	<classpathentry kind="lib" path="libs/jtidy-4aug2000r7-dev.jar"/>
+	<classpathentry kind="lib" path="libs/servlet-api-2.4.jar"/>
+	<classpathentry kind="lib" path="libs/standard-1.1.2.jar"/>
+	<classpathentry kind="lib" path="libs/commons-io-2.4.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

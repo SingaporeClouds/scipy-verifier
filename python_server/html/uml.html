@@ -1,0 +1,77 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/> 
+<script type="text/javascript">
+function updateValue() {
+    var jsonrequest = document.getElementById('jsonrequest')
+    var solution = document.getElementById('solution')
+    var tests = document.getElementById('tests')
+    var examples = document.getElementById('examples')
+    var obj = {solution: solution.value, tests: tests.value, examples:examples.value}
+    jsonrequest.value = JSON.stringify(obj)
+}
+</script>
+</head>
+<body>
+<h2>UML verifier</h2>
+<br>
+Solution code:<br>
+<textarea id="solution" rows="10" cols="80">
+factorial <- function(n)
+{
+  if (n == 0)
+  {
+    return(1)
+  }
+  else
+  {
+    return(n * factorial(n - 1))
+  }
+}
+</textarea>
+
+<br>
+Tests:<br>
+<textarea id="tests" rows="10" cols="80">
+>>> checkEquals(6, factorial(3))
+	True
+>>> checkEqualsNumeric(6, factorial(3))
+	True
+>>> checkIdentical(6, factorial(3))
+	True
+>>> checkTrue(2 + 2 == 4, 'Arithmetic works')
+	True
+>>> checkException(log('a'), 'Unable to take the log() of a string')
+	True
+>>> expect_that(1 ^ 1, equals(1))
+ True
+>>> expect_that(2 ^ 2, equals(4))
+ True
+>>> expect_that(2 + 2 == 4, is_true())
+ True
+>>> expect_that(2 == 1, is_false())
+ True
+>>> expect_that(1, is_a('numeric'))
+ True
+>>> expect_that(print('Hello World!'), prints_text('Hello World!'))
+ True
+>>> expect_that(log('a'), throws_error())
+ True
+>>> expect_that(factorial(16), takes_less_than(1))
+ True
+</textarea>
+<br>
+Examples code:<br>
+<textarea id="examples" rows="10" cols="80">
+>>> checkEquals(6, factorial(3))
+  True
+</textarea>
+<form action="http://umlchecker.appspot.com/UmlVerifier" method="POST">
+<input type="hidden" name="jsonrequest" id="jsonrequest"/>
+<input type="submit" onclick="updateValue()"></input>
+</form>
+</body>
+</html>
