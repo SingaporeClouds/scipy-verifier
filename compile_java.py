@@ -18,7 +18,23 @@ if __name__ == '__main__':
     
     print os.popen("fuser -k 2012/tcp").read()
     
+    pw_record      = pwd.getpwnam("verifiers")
+    user_name      = pw_record.pw_name
+    user_home_dir  = pw_record.pw_dir
+    user_uid       = pw_record.pw_uid
+    user_gid       = pw_record.pw_gid
+    os.environ['HOME']     = user_home_dir
+    os.environ['LOGNAME']  = user_name
+    os.environ['USER']     = user_name
+    os.environ['LANGUAGE'] = "en_US.UTF-8"
+    os.environ['LANG']     = "en_US.UTF-8"
+    os.environ['LC_ALL']   = "en_US.UTF-8"
+    os.setgid(user_gid)
+    os.setuid(user_uid)
     
+    os.chdir(verifiers_home_dir+"/javaserver")
+    
+    print os.popen("ant compile").read()
     
     
     

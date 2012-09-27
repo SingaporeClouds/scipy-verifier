@@ -7,8 +7,9 @@ sudo gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9
 sudo gpg -a --export E084DAB9 | sudo apt-key add -
 sudo apt-get update
 sudo apt-get upgrade
-sudo apt-get install openjdk-7-jre openjdk-7-jdk python-scipy python-rpy2 git python-setuptools python-dev build-essential libevent-dev python-gevent language-pack-id r-cran-runit libgnustep-base-dev  gobjc gnustep gnustep-make gnustep-common ruby
+sudo apt-get install openjdk-7-jre openjdk-7-jdk python-scipy python-rpy2 git python-setuptools python-dev build-essential libevent-dev python-gevent language-pack-id r-cran-runit libgnustep-base-dev  gobjc gnustep gnustep-make gnustep-common ruby ant python-pip
 sudo easy_install gserver
+sudo easy_install tornado
 export LANGUAGE=en_US.UTF-8
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8

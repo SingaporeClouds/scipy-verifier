@@ -38,8 +38,8 @@ if __name__=="__main__":
     msg = msg.splitlines()
    
 
-    log.info(os.popen("cp -rf "+parent_folder+"unity  "+verifiers_home_dir+"/unity").read())
-    log.info(os.popen("cp -rf "+parent_folder+"junit  "+verifiers_home_dir+"/junit").read())
+    log.info(os.popen("cp -rf "+parent_folder+"python_server/unity  "+verifiers_home_dir+"/unity").read())
+    log.info(os.popen("cp -rf "+parent_folder+"python_server/junit  "+verifiers_home_dir+"/junit").read())
     
     log.info(os.popen("chown verifiers:verifiers -R "+verifiers_home_dir).read()) 
     log.info(os.popen("chmod 777 -R "+verifiers_home_dir).read())
