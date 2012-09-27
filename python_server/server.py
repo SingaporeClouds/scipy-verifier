@@ -4,19 +4,19 @@
 
 import sys
 import os
-folder = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(folder)
-
 import json
 import logging
 import subprocess
 from Queue import Empty,Queue
 from threading import Thread
 import base64
-import os
 import socket 
 import tornado.ioloop
 import tornado.web
+
+folder = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(folder)
+
 
 os.chdir("/home/server/scipy-verifier")
 
@@ -88,9 +88,6 @@ def SendToJava(verifier,jsonrequest):
     response =  repr(data).decode('UTF-8')
     response = response[response.index("{"):].strip("'")
     return response
-
-
-
 
 
 
@@ -174,7 +171,7 @@ class TestHandler(tornado.web.RequestHandler):
     def get(self,filename):
         self.set_header("Content-type","text/html")
         try:
-            _file = open(folder +"/html/"+filename+".html")
+            _file = open(folder +"/testers/"+filename+".html")
         except:
             self.write("Tester page not found")
             return

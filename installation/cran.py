@@ -1,4 +1,4 @@
-
+#install all the cran packages
 from rpy2.robjects import r
 
 execute  = """# get names of installed packages

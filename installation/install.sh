@@ -27,7 +27,6 @@ chmod 777 -R /home/verifiers/unity
 chown verifiers:verifiers -R /home/verifiers
 cd scipy-verifier/installation
 sudo python /home/server/scipy-verifier/installation/cran.py
-#Create a symbolic link file into /etc/init.d/
 sudo chmod +x /home/server/scipy-verifier/installation/boot.sh
 sudo ln -s /home/server/scipy-verifier/installation/boot.sh /etc/init.d/boot.sh
 sudo update-rc.d boot.sh defaults

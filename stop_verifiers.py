@@ -2,10 +2,9 @@
 #stop the server
 
 import os
+import signal
 folder = os.path.dirname(os.path.abspath(__file__))
 os.chdir(folder)
-
-import signal
 
 _file = open("pid","r")
 pid = int(_file.read().strip())
