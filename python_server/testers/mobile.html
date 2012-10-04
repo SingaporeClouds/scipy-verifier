@@ -156,7 +156,8 @@
 		                "r":true,
 		                "python":true,
 		                "jsp":true,
-		                "java":true
+		                "java":true,
+		                "ruby":true
 		               }
 			
 			if(jQuery("#verifier").val() in dict){
@@ -524,7 +525,11 @@
 		             "java":{"solution":"int a = 2;\nint b = 5;\nint c=a+1;\na=8+b-c;",
 		                  "tests":"assertEquals(10,a);\nassertEquals(3,c)"},
 		             "jsp":{"solution":"<%@ page import=\"java.util.*, java.text.*\" %><HTML><HEAD><TITLE>Hello Pineapples</TITLE></HEAD>\n<BODY><H1>Hello World</H1>\n<TABLE><TR><TD><P>This is an <B>embedded</B> table</P></TD></TR>\n<TR><TD>    The request parameter 'fruit' has a value of <%= request.getParameter(\"fruit\") %>\n</TD></TR></TABLE>\nToday is: <%= new SimpleDateFormat(\"dd/MM/yyyy\").format(new Date()) %>\n </BODY></HTML>",
-		                  "tests":"String expectedDate = new SimpleDateFormat(\"dd/MM/yyyy\").format(new Date());\npage().shouldHaveTitle(\"Hello Pineapples\");\npage().shouldContain(\"Today is: \"+expectedDate);\nonRequest(\"fruit\", \"guava\").page().shouldContain(\"The request parameter 'fruit' has a value of guava\");\npage().shouldContainElement(\"//TABLE/TR/TD/P/B\");\nelement(\"//TABLE/TR/TD/P/B\").shouldContain(\"embedded\");"}
+		                  "tests":"String expectedDate = new SimpleDateFormat(\"dd/MM/yyyy\").format(new Date());\npage().shouldHaveTitle(\"Hello Pineapples\");\npage().shouldContain(\"Today is: \"+expectedDate);\nonRequest(\"fruit\", \"guava\").page().shouldContain(\"The request parameter 'fruit' has a value of guava\");\npage().shouldContainElement(\"//TABLE/TR/TD/P/B\");\nelement(\"//TABLE/TR/TD/P/B\").shouldContain(\"embedded\");"},
+		             "ruby":{"solution":"a = 1\nb = 2",
+						  "tests":"assert_equal(1,a)\nassert_equal(2,b)",
+						  "hosts":["parserplayground-staging.appspot.com/ruby?id=1","parserplayground-staging.appspot.com/ruby?id=2"]
+						  }     
 					}
 	   if(verifier in dict){
 		   jQuery("#solutions").val(dict[verifier].solution);
@@ -817,6 +822,7 @@
 									<option>oc</option>
 									<option>python</option>
 									<option>java</option>
+									<option>ruby</option>
 									<option>jsp</option>
 									<option>others</option>
 								</select>

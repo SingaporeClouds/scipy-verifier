@@ -28,8 +28,9 @@ verifiers_dict = {"r":"R_verifier.py",
                   "jsp":"jsp_verifier.py",
                   "newjsp":None,
                   "java":None,
+                  "ruby":None,
                   }
-java_list = ["java","newjsp"]
+java_list = ["java","newjsp","ruby"]
 
 
 def Command(*cmd,**kwargs):
@@ -72,7 +73,6 @@ def SendToJava(verifier,jsonrequest):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)   
     s.connect(("localhost", 2012))  
     
-    verifier = "java"
     mensaje = verifier+" "*(10-len(verifier)) + jsonrequest
     
     count = len(mensaje)

@@ -27,6 +27,7 @@ if __name__=="__main__":
     #delete old file
     log.info(os.popen("rm -rf "+verifiers_home_dir+"/unity").read())
     log.info(os.popen("rm -rf "+verifiers_home_dir+"/junit").read())
+    log.info(os.popen("rm -rf "+verifiers_home_dir+"/javaserver").read())
     
     #cd 
     os.chdir(parent_folder)

@@ -11,7 +11,7 @@ if __name__ == '__main__':
     print os.popen("rm -rf "+verifiers_home_dir+"/java_server").read()
     
     #copy new files
-    print os.popen("cp -rf "+folder+"/javaserver  "+verifiers_home_dir+"/javaserver").read()
+    print os.popen("cp -rf "+folder+"/javaserver  "+verifiers_home_dir).read()
     
     print os.popen("chown verifiers:verifiers -R "+verifiers_home_dir).read() 
     print os.popen("chmod 777 -R "+verifiers_home_dir).read()

@@ -19,5 +19,6 @@
 	<classpathentry kind="lib" path="libs/servlet-api-2.4.jar"/>
 	<classpathentry kind="lib" path="libs/standard-1.1.2.jar"/>
 	<classpathentry kind="lib" path="libs/commons-io-2.4.jar"/>
+	<classpathentry kind="lib" path="libs/jruby-complete-1.7.0.RC1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
