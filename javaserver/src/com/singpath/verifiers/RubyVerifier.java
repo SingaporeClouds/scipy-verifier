@@ -118,6 +118,7 @@ public class RubyVerifier extends Verifier {
 
 		evaler.eval(runtime, Code);
 		String result = new String(outputBuffer.toByteArray());
+		this.log.error(result);
 		this.set_result(result.trim());
 
 		return;

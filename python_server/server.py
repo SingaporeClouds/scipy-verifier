@@ -87,6 +87,8 @@ def SendToJava(verifier,jsonrequest):
     
     response =  repr(data).decode('UTF-8')
     response = response[response.index("{"):].strip("'")
+    if response.startswith("{{"):
+        response = response[1:]
     return response
 
 
