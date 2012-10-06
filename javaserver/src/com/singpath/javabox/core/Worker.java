@@ -13,6 +13,8 @@ import org.apache.log4j.Logger;
 
 import com.singpath.verifiers.JavaVerifier;
 import com.singpath.verifiers.RubyVerifier;
+import com.singpath.verifiers.Verifier;
+import com.singpath.verifiers.JSPVerifier;
 
 public class Worker implements Runnable {
 	protected Logger log = null;
@@ -33,19 +35,25 @@ public class Worker implements Runnable {
 			String msg = request.substring(10).trim();
 			String uuid = UUID.randomUUID().toString();
 			try {
+				ThreadGroup safeThreadGroup = new ThreadGroup(uuid);
+				Verifier instance = null;
+				
 				if (route.equals("java")) {
-
-					ThreadGroup safeThreadGroup = new ThreadGroup(uuid);
-					JavaVerifier instance = new JavaVerifier(uuid,
+					instance = new JavaVerifier(uuid,
 							safeThreadGroup);
-					return instance.process_problem(msg);
 				}
 				
 				if (route.equals("ruby")) {
 
-					ThreadGroup safeThreadGroup = new ThreadGroup(uuid);
-					RubyVerifier instance = new RubyVerifier(uuid,
+					instance = new RubyVerifier(uuid,
 							safeThreadGroup);
+				}
+				
+				if (route.equals("jsp")) {
+					instance = new JSPVerifier(uuid,
+							safeThreadGroup);
+				}
+				if(!instance.equals(null)){
 					return instance.process_problem(msg);
 				}
 

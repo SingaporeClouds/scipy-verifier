@@ -82,6 +82,17 @@ public class JavaVerifier extends Verifier{
 			}
 			catch(TargetError e)
 			{
+				//if the error is not a assertion
+				if(!e.getTarget().getClass().equals(java.lang.AssertionError.class)){
+					StringWriter sw = new StringWriter();
+					PrintWriter  pw = new PrintWriter(sw);
+					e.getTarget().printStackTrace(pw);
+					String error = sw.toString();
+					this.set_result("{\"errors\": \""+error+"\"}");
+					this.log.error(error);
+					return;	
+				}
+				
 				JSONObject resulthash = new JSONObject();
 				solved = false;
 				//special handling for assertTrue and assertFalse, because the exception message is empty

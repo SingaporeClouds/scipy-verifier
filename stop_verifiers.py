@@ -16,12 +16,14 @@ except:
     pid = {}
 
 try:
-    os.kill(int(pid["java"]),signal.SIGKILL)
-    os.kill(int(pid["python"]),signal.SIGKILL)
+    for i in pid:
+        os.kill(int(pid[i]),signal.SIGKILL)
+
 except:
     pass
 
 os.popen("fuser -k 80/tcp").read()
 os.popen("fuser -k 2012/tcp").read()
+os.popen("fuser -k 8080/tcp").read()
 
 print " Server closed"

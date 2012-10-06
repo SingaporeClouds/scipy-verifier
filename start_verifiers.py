@@ -8,6 +8,7 @@ verifiers_home_dir = pwd.getpwnam("verifiers").pw_dir
 print "closing ports"
 print os.popen("fuser -k 80/tcp").read()
 print os.popen("fuser -k 2012/tcp").read()
+print os.popen("fuser -k 8080/tcp").read()
 #compile and run java server
 print os.popen("python "+folder+"/compile_java.py").read()
 
@@ -27,7 +28,13 @@ os.environ['LC_ALL']   = "en_US.UTF-8"
 os.setgid(user_gid)
 os.setuid(user_uid)
 os.chdir(verifiers_home_dir+"/javaserver/build/classes/")
+
+#start java server
 java_pid = str(os.spawnv(os.P_NOWAIT,"/usr/bin/java",("java","-cp",":"+verifiers_home_dir+"/javaserver/libs/*","com/singpath/javabox/Server")))
+
+#start tomcat server
+os.chdir(verifiers_home_dir+"/javaserver/jsp/tomcat/bin/")
+tomcat_pid = str(os.spawnv(os.P_WAIT,"/usr/bin/env",("sh",verifiers_home_dir+"/javaserver/jsp/tomcat/bin/"+"startup.sh")))
 
 
 

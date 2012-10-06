@@ -25,12 +25,12 @@ verifiers_dict = {"r":"R_verifier.py",
                   "oc":"oc_verifier.py",
                   "scipy":"scipy_verifier.py",
                   "python":"python_verifier.py",
-                  "jsp":"jsp_verifier.py",
-                  "newjsp":None,
+                  "oldjsp":"jsp_verifier.py",
+                  "jsp":None,
                   "java":None,
                   "ruby":None,
                   }
-java_list = ["java","newjsp","ruby"]
+java_list = ["java","jsp","ruby"]
 
 
 def Command(*cmd,**kwargs):
