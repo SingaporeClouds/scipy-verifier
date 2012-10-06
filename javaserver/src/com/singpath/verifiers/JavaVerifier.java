@@ -160,7 +160,7 @@ public class JavaVerifier extends Verifier{
 		resultjson.put("solved", solved);
 		resultjson.put("results", testResults);
 		resultjson.put("printed", new String(outputBuffer.toByteArray(), Charset.forName("UTF-8")));
-		this.set_result(resultjson.toString());
+		this.set_result(resultjson.toJSONString());
 	return;
 
 	}

@@ -47,7 +47,6 @@ String expectedDate = new SimpleDateFormat("dd/MM/yyyy").format(new Date());
 Document response = page.get();
 assertEquals(false,response.html().indexOf("Hello Pineapples") == -1);
 assertEquals(false,response.html().indexOf("Today is: "+expectedDate)==-1);
-String expectedDate = new SimpleDateFormat("dd/MM/yyyy").format(new Date());
 response = page.get("fruit", "guava");
 assertEquals(false,response.html().indexOf("The request parameter 'fruit' has a value of guava")==-1);
 assertEquals("embedded",response.select("table tr td p b").html());

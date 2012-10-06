@@ -16,6 +16,8 @@ import com.singpath.verifiers.RubyVerifier;
 import com.singpath.verifiers.Verifier;
 import com.singpath.verifiers.JSPVerifier;
 
+import org.apache.commons.codec.binary.Base64;
+
 public class Worker implements Runnable {
 	protected Logger log = null;
 	protected Socket clientSocket = null;
@@ -81,8 +83,10 @@ public class Worker implements Runnable {
 
 			DataInputStream DataInput = new DataInputStream(input);
 			DataOutputStream DataOutput = new DataOutputStream(output);
-			String request = DataInput.readUTF();
-			DataOutput.writeUTF(this.process_request(request));
+			String request  = new String(Base64.decodeBase64(DataInput.readUTF()));
+			String response = Base64.encodeBase64String(this.process_request(request).getBytes());
+			
+			DataOutput.writeUTF(response);
 
 			this.clientSocket.close();
 			this.log.info("Request processed successfully");

@@ -12,6 +12,8 @@ import java.util.regex.Pattern;
 
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
+import net.minidev.json.JSONStyle;
+import net.minidev.json.JSONValue;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.BasicConfigurator;
@@ -46,6 +48,7 @@ public class JSPVerifier extends Verifier {
 		PrintStream output = new PrintStream(outputBuffer);
 		Interpreter interpreter = new Interpreter(null, output, output, false, null);
 		interpreter.setStrictJava(true);
+		JSONObject resultjson = new JSONObject();
 		
 		// save solution in a file
 		String uuid  = UUID.randomUUID().toString();
@@ -60,7 +63,8 @@ public class JSPVerifier extends Verifier {
 			PrintWriter pw = new PrintWriter(sw);
 			e.printStackTrace(pw);
 			String error = sw.toString();
-			this.set_result("{\"errors\": \"Internal Server Error\"}");
+			resultjson.put("errors", "Internal Server Error");
+			this.set_result(JSONValue.toJSONString(resultjson,JSONStyle.NO_COMPRESS));
 			this.log.error(error);
 			return;
 		}
@@ -82,7 +86,8 @@ public class JSPVerifier extends Verifier {
 			PrintWriter pw = new PrintWriter(sw);
 			e.printStackTrace(pw);
 			String error = sw.toString();
-			this.set_result("{\"errors\": \"Internal Server Error\"}");
+			resultjson.put("errors", "Internal Server Error");
+			this.set_result(JSONValue.toJSONString(resultjson,JSONStyle.NO_COMPRESS));
 			this.log.error(error);
 			return;
 		}
@@ -106,7 +111,8 @@ public class JSPVerifier extends Verifier {
 				//if there exist a error in the jsp page
 				if(e.getTarget().getClass().equals(JspException.class)){
 					String error = e.getTarget().getMessage();
-					this.set_result("{\"errors\": \""+error+"\"}");
+					resultjson.put("errors", error);
+					this.set_result(JSONValue.toJSONString(resultjson,JSONStyle.NO_COMPRESS));
 					this.log.error(error);
 					return;
 					
@@ -117,9 +123,10 @@ public class JSPVerifier extends Verifier {
 					PrintWriter  pw = new PrintWriter(sw);
 					e.getTarget().printStackTrace(pw);
 					String error = sw.toString();
-					this.set_result("{\"errors\": \""+error+"\"}");
+					resultjson.put("errors", error);
+					this.set_result(JSONValue.toJSONString(resultjson,JSONStyle.NO_COMPRESS));
 					this.log.error(error);
-					return;	
+					return;
 				}
 				
 				
@@ -178,7 +185,8 @@ public class JSPVerifier extends Verifier {
 				PrintWriter  pw = new PrintWriter(sw);
 				e.printStackTrace(pw);
 				String error = sw.toString();
-				this.set_result("{\"errors\": \""+error+"\"}");
+				resultjson.put("errors", error);
+				this.set_result(JSONValue.toJSONString(resultjson,JSONStyle.NO_COMPRESS));
 				this.log.error(error);
 				return;
 			}
@@ -189,11 +197,11 @@ public class JSPVerifier extends Verifier {
 			testResults.add(new JSONObject(resulthash));	
 		}
 		
-		JSONObject resultjson = new JSONObject();
+		
 		resultjson.put("solved", solved);
 		resultjson.put("results", testResults);
 		resultjson.put("printed", new String(outputBuffer.toByteArray(), Charset.forName("UTF-8")));
-		this.set_result(resultjson.toString());
+		this.set_result(JSONValue.toJSONString(resultjson,JSONStyle.NO_COMPRESS));
 		return;
 		
 	}
@@ -204,15 +212,11 @@ public class JSPVerifier extends Verifier {
 		BasicConfigurator.configure();
 		JSONObject dict = new JSONObject();
 
-		dict.put("tests",
-				"String expectedDate = new SimpleDateFormat(\"dd/MM/yyyy\").format(new Date());Document response = page.post();\nassertEquals(false,response.html().indexOf(\"Hello Pineapples\") == -1);assertEquals(false,response.html().indexOf(\"T2oday is: \"+expectedDate)==-1);");
-		dict.put("solution", "<%@ page import=\"java.util.*, java.text.*\" %>"+
-"<HTML><HEAD><TITLE>Hello Pineapples</TITLE></HEAD><BODY>	<H1>Hello World</H1><TABLE>	<TR><TD><P>This is an <B>embedded</B> table</P>"+
+		dict.put("tests","String expectedDate = new SimpleDateFormat(\"dd/MM/yyyy\").format(new Date());\nDocument response = page.get();\nassertEquals(false,response.html().indexOf(\"Hello Pineapples\") == -1);\nassertEquals(false,response.html().indexOf(\"Today is: \"+expectedDate)==-1);\nresponse = page.get(\"fruit\", \"guava\");\nassertEquals(false,response.html().indexOf(\"The request parameter 'fruit' has a value of guava\")==-1);\nassertEquals(\"embedded\",response.select(\"table tr td p b\").html());");
+		dict.put("solution", "<%@ page import=\"java.util.*, java.text.*\" %>");//+
+/*"<HTML><HEAD><TITLE>Hello Pineapples</TITLE></HEAD><BODY>	<H1>Hello World</H1><TABLE>	<TR><TD><P>This is an <B>embedded</B> table</P>"+
 			"</TD></TR><TR><TD>The request parameter 'fruit' has a value of <%= request.getParameter(\"fruit\") %>"+
-			"</TD></TR></TABLE>Today is: <%= new SimpleDateFormat(\"dd/MM/yyyy\").format(new Date()) %></BODY></HTML>");
-
-		File file = new File(
-				"/home/verifiers/javaserver/src/com/singpath/utils/JSPTester.java");
+			"</TD></TR></TABLE>Today is: <%= new SimpleDateFormat(\"dd/MM/yyyy\").format(new Date()) %></BODY></HTML>");*/
 
 		try {
 

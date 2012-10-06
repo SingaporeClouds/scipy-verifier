@@ -73,19 +73,20 @@ def SendToJava(verifier,jsonrequest):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)   
     s.connect(("localhost", 2012))  
     
-    mensaje = verifier+" "*(10-len(verifier)) + jsonrequest
+    message = verifier+" "*(10-len(verifier)) + jsonrequest
+    message = base64.b64encode(message)
     
-    count = len(mensaje)
+    count = len(message)
     msb, lsb = divmod(count, 256) # split to two bytes
     s.send(chr(msb))
     s.send(chr(lsb))
-    s.send(mensaje)
+    s.send(message)
     
     data =  s.recv(102400)
     
     s.close()
-    
     response =  repr(data).decode('UTF-8')
+    response = base64.b64decode(response)
     response = response[response.index("{"):].strip("'")
     if response.startswith("{{"):
         response = response[1:]
@@ -144,9 +145,11 @@ class VerifierHandler(tornado.web.RequestHandler):
                     result = SendToJava(verifierName,jsonrequest)
                 except:
                     result = json.dumps({"errors":"Internal Server Error"})
+                print str(result)
+                json.loads(unicode(result))
                 if  vcallback!=None:
                     result = vcallback+"("+result+")"
-                self.set_header("Content-type","application/json")
+                self.set_header("Content-type","text/plain")
                 self.write(result)
                 self.finish()
                 return
@@ -164,7 +167,7 @@ class VerifierHandler(tornado.web.RequestHandler):
         if  vcallback!=None:
             result = vcallback+"("+result+")"
         
-        self.set_header("Content-type","application/json")
+        self.set_header("Content-type","text/plain")
         self.write(result)
         self.finish()
     
@@ -192,6 +195,8 @@ application = tornado.web.Application([
 if __name__ == "__main__":
     #sys.stderr = open(folder+"/error_log","a")
     #sys.stdout = open(folder+"/log","a")
-    print 'Serving on 80...'
+    
     application.listen(80)
+    print 'Serving on 80...'
     tornado.ioloop.IOLoop.instance().start()
+    

@@ -71,7 +71,7 @@ public abstract class Verifier extends Thread {
 					ret = "{\"errors\": \"Your code took too long to return. Your solution may be stuck in an infinite loop. Please try again.\"}";
 					this.log.error("code take much time to run");
 				} else {
-					ret = this.get_result();
+					ret = this.get_result().trim();
 				}
 
 			} catch (Exception e) {
