@@ -13,6 +13,8 @@ if __name__ == '__main__':
     #copy new files
     print os.popen("cp -rf "+folder+"/javaserver  "+verifiers_home_dir).read()
     
+    print os.popen("mkdir "+verifiers_home_dir+"/javaserver/jsp/tomcat/logs").read()
+    
     print os.popen("chown verifiers:verifiers -R "+verifiers_home_dir).read() 
     print os.popen("chmod 777 -R "+verifiers_home_dir).read()
     
