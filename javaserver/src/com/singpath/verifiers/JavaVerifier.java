@@ -6,7 +6,10 @@ import com.singpath.verifiers.Verifier;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import net.minidev.json.*;
+
 import org.apache.log4j.BasicConfigurator;
+import org.junit.ComparisonFailure;
+
 import java.io.StringWriter;
 import java.io.PrintWriter;
 import java.util.regex.Matcher;
@@ -28,10 +31,11 @@ public class JavaVerifier extends Verifier{
 		PrintStream output = new PrintStream(outputBuffer);
 		Interpreter interpreter = new Interpreter(null, output, output, false, null);
 		interpreter.setStrictJava(true);
+		JSONObject resultjson = new JSONObject();
 		
 		if (this.solution==null || this.tests==null){
-			
-			this.set_result("{\"errors\": \"No solution or tests defined\"}");
+			resultjson.put("errors", "No solution or tests defined");
+			this.set_result(JSONValue.toJSONString(resultjson,JSONStyle.NO_COMPRESS));
 			return;
 		}
 		
@@ -45,7 +49,8 @@ public class JavaVerifier extends Verifier{
 			PrintWriter  pw = new PrintWriter(sw);
 			e.printStackTrace(pw);
 			String error = sw.toString();
-			this.set_result("{\"errors\": \""+error+"\"}");
+			resultjson.put("errors", error);
+			this.set_result(JSONValue.toJSONString(resultjson,JSONStyle.NO_COMPRESS));
 			this.log.error(error);
 			return;
 		}
@@ -60,7 +65,8 @@ public class JavaVerifier extends Verifier{
 			PrintWriter  pw = new PrintWriter(sw);
 			e.printStackTrace(pw);
 			String error = sw.toString();
-			this.set_result("{\"errors\": \""+error+"\"}");
+			resultjson.put("errors", error);
+			this.set_result(JSONValue.toJSONString(resultjson,JSONStyle.NO_COMPRESS));
 			this.log.error(error);
 			return;
 		}
@@ -83,12 +89,13 @@ public class JavaVerifier extends Verifier{
 			catch(TargetError e)
 			{
 				//if the error is not a assertion
-				if(!e.getTarget().getClass().equals(java.lang.AssertionError.class)){
+				if(!(e.getTarget().getClass().equals(java.lang.AssertionError.class)||e.getTarget().getClass().equals(ComparisonFailure.class))){
 					StringWriter sw = new StringWriter();
 					PrintWriter  pw = new PrintWriter(sw);
 					e.getTarget().printStackTrace(pw);
 					String error = sw.toString();
-					this.set_result("{\"errors\": \""+error+"\"}");
+					resultjson.put("errors", error);
+					this.set_result(JSONValue.toJSONString(resultjson,JSONStyle.NO_COMPRESS));
 					this.log.error(error);
 					return;	
 				}
@@ -145,7 +152,8 @@ public class JavaVerifier extends Verifier{
 				PrintWriter  pw = new PrintWriter(sw);
 				e.printStackTrace(pw);
 				String error = sw.toString();
-				this.set_result("{\"errors\": \""+error+"\"}");
+				resultjson.put("errors", error);
+				this.set_result(JSONValue.toJSONString(resultjson,JSONStyle.NO_COMPRESS));
 				this.log.error(error);
 				return;
 			}
@@ -156,7 +164,7 @@ public class JavaVerifier extends Verifier{
 			testResults.add(new JSONObject(resulthash));	
 		}
 		
-		JSONObject resultjson = new JSONObject();
+		
 		resultjson.put("solved", solved);
 		resultjson.put("results", testResults);
 		resultjson.put("printed", new String(outputBuffer.toByteArray(), Charset.forName("UTF-8")));

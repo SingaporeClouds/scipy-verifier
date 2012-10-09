@@ -13,7 +13,7 @@ import base64
 import socket 
 import tornado.ioloop
 import tornado.web
-
+import traceback
 folder = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(folder)
 
@@ -86,6 +86,7 @@ def SendToJava(verifier,jsonrequest):
     
     s.close()
     response =  repr(data).decode('UTF-8')
+    response = response[response.index("ey"):].strip("'")
     response = base64.b64decode(response)
     response = response[response.index("{"):].strip("'")
     if response.startswith("{{"):
@@ -144,9 +145,7 @@ class VerifierHandler(tornado.web.RequestHandler):
                 try:
                     result = SendToJava(verifierName,jsonrequest)
                 except:
-                    result = json.dumps({"errors":"Internal Server Error"})
-                print str(result)
-                json.loads(unicode(result))
+                    result = json.dumps({"errors":traceback.print_exc()})
                 if  vcallback!=None:
                     result = vcallback+"("+result+")"
                 self.set_header("Content-type","text/plain")

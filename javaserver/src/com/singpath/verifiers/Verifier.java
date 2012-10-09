@@ -88,7 +88,6 @@ public abstract class Verifier extends Thread {
 			this.log.error("Bad request");
 
 		}
-
 		return ret;
 
 	}

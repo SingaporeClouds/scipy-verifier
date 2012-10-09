@@ -17,7 +17,9 @@ import net.minidev.json.JSONValue;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.BasicConfigurator;
-
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.junit.ComparisonFailure;
 import bsh.Interpreter;
 import bsh.TargetError;
 import com.singpath.verifiers.jsp.JspException;
@@ -63,7 +65,7 @@ public class JSPVerifier extends Verifier {
 			PrintWriter pw = new PrintWriter(sw);
 			e.printStackTrace(pw);
 			String error = sw.toString();
-			resultjson.put("errors", "Internal Server Error");
+			resultjson.put("errors", "Internal Server Error (I/O Exception)");
 			this.set_result(JSONValue.toJSONString(resultjson,JSONStyle.NO_COMPRESS));
 			this.log.error(error);
 			return;
@@ -86,7 +88,7 @@ public class JSPVerifier extends Verifier {
 			PrintWriter pw = new PrintWriter(sw);
 			e.printStackTrace(pw);
 			String error = sw.toString();
-			resultjson.put("errors", "Internal Server Error");
+			resultjson.put("errors", error);
 			this.set_result(JSONValue.toJSONString(resultjson,JSONStyle.NO_COMPRESS));
 			this.log.error(error);
 			return;
@@ -117,8 +119,9 @@ public class JSPVerifier extends Verifier {
 					return;
 					
 				}
+				this.log.error(e.getTarget().getClass());
 				//if the error is not a assertion
-				if(!e.getTarget().getClass().equals(java.lang.AssertionError.class)){
+				if(!(e.getTarget().getClass().equals(java.lang.AssertionError.class)||e.getTarget().getClass().equals(ComparisonFailure.class))){
 					StringWriter sw = new StringWriter();
 					PrintWriter  pw = new PrintWriter(sw);
 					e.getTarget().printStackTrace(pw);
@@ -209,6 +212,7 @@ public class JSPVerifier extends Verifier {
 	public static void main(String[] args)
 
 	{
+		Logger.getRootLogger().setLevel(Level.INFO);
 		BasicConfigurator.configure();
 		JSONObject dict = new JSONObject();
 
