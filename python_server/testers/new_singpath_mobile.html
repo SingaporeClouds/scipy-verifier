@@ -1,0 +1,1502 @@
+<html>
+
+<head>
+<link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet">
+<link rel="stylesheet"  href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" type="text/css"/>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
+<script>
+	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	//								Global vars
+	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	// Manage paralelism with different host
+	//total host
+	var total_hosts = {}	
+	//free host
+	var free_hosts = {}
+	//busy host
+	var busy_hosts = {}
+
+	var host_counter  = 0;
+
+	var no_others_host = [];
+
+	var can_upload_problem = false;
+	var current_problem_to_upload = null;
+
+	//pool of request
+	var pool = {};
+	//job queue
+	var jobs = new Array();
+	//job dictionary
+	var job_dict = {};
+	//mac active items in the pool
+	var max_items = 10;
+	var max_intents = 3;
+	//contine adding item to the pool
+	var continue_add = true;
+
+
+	//nonErrorResults
+	var nonErrorResults = {};
+
+	//permutation counters
+	var total_jobs  = 0;
+	var retried_jobs    = 0;
+	var finished_jobs = 0;
+	var good_jobs = 0;
+	var error_jobs = 0;
+	var fail_jobs = 0;
+	var start_time = 0;
+	var end_time = 0;
+	var progressbar = 0;
+	//perm cahce
+	var perms_cache = {};
+	//block verifier selector 
+	var selector_blocked = false;
+
+	var stop = false;
+
+	function reset(){
+		//reset gobal vars
+		if (Object.size(pool)>0){
+			alert("I can not reset if there are Jobs runing, please pause first");
+			check_ui();
+			return false;
+		}
+		pool = {};
+		jobs = [];
+		job_dict = {};
+		nonErrorResults = {};
+		bad_permutations  = 0;
+		good_permutations = 0;
+		done_permutations = 0;
+		continue_add = true;
+		total_jobs  = 0;
+		retried_jobs    = 0;
+		finished_jobs = 0;
+		good_jobs = 0;
+		error_jobs = 0;
+		fail_jobs = 0;
+		progressbar = 0;
+		start_time = 0;
+		end_time = 0;
+		stop = false;
+		jQuery("#fails").html("<tr><th>Error</th><th>Permutation</th><th>code</th><tr>");
+		jQuery("#nonErrorResults_visual").empty();
+		check_ui();
+		return true;
+	}
+
+	var replaceHtmlEntites = (function() {
+		  var translate_re = /( |&|\\|<|>)/g;
+		  var translate = {
+		    " "     : "&nbsp;", 
+		    "&"     : "&amp;", 
+		    "\""    : "&quot;", 
+		    "<"     : "&lt;", 
+		    ">"     : "&gt;"
+		  };
+		  return function(s) {
+		    return ( s.replace(translate_re, function(match, entity) { 
+		      return translate[entity]; 
+		    }) );
+		  }
+		})();
+
+	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	//								Core
+	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	function create_jobs(){
+		//create the list of jobs that will be request to the server
+		 var lines;
+         var lines2;
+         var num_of_lines;
+         var idx;
+         var sub_line;
+         var perms;
+         var i;
+         var j;
+         var new_job;
+         //var host = "http://"+jQuery("#host").val()+"/"+jQuery("#verifier").val();
+  		 var tests = lines = jQuery("#tests").val();
+  		 var jsonrequest;
+  		 var solution;
+  		 var call_back;
+  		 
+		 lines = jQuery("#solutions").val().split("\n");
+
+         lines2 = new Array();
+         
+         for (sub_line in lines){
+         	if(jQuery.trim(lines[sub_line])==""){
+         		continue;
+             }
+             lines2.push(lines[sub_line]);
+         }
+         
+         lines = lines2; 
+        
+		 num_of_lines = lines.length;
+                 
+         perms = get_perm(num_of_lines);
+         
+         for(i in perms){
+         	
+         	solution = "";
+         	
+         	for(j in perms[i]){
+         		solution = solution + lines[perms[i][j]-1]  + "\n";
+         	}
+         	
+         	jsonrequest = {"solution":solution,"tests":tests};
+         	
+         	var dict = {"scipy":true,
+					    "oc":true,
+					    "c":true,	  
+		                "r":true,
+		                "python":true,
+		                "jsp":true,
+		                "oldjsp":true,
+		                "java":true,
+		                "ruby":true
+		               }
+
+			if(jQuery("#verifier").val() in dict){
+				call_back = "vcallback";
+				jsonrequest = btoa(JSON.stringify(jsonrequest));
+			}
+			else{
+				call_back = "callback";
+				jsonrequest = JSON.stringify(jsonrequest);
+			}
+         	
+         	new_job = { "jsonrequest":jsonrequest,
+         	            "callback":call_back,
+         	            "solution": solution,
+         				"intents": 0,
+         				"start_time":0,
+         				"end_time":0,
+         				"key": perms[i].join(""),
+         			    "success": function(data){
+         			        var good_response = true;
+         			        var rx 	      = new RegExp("&key=([0-9]+)&", "g");
+							var match     = rx.exec(this.url);
+							var key       = match[1];
+         			        check_ui();
+							var date = new Date();
+							var content = "";
+							var i;
+							var color;
+         			        
+         			    	if ("errors" in data){
+         			    		error_jobs    		   = error_jobs + 1;
+         			    		finished_jobs   	   = finished_jobs + 1;
+         			    		job_dict[key].end_time = date.getTime();
+         			    		if(end_time<job_dict[key].end_time){
+         			    			end_time = job_dict[key].end_time;
+         			    		}
+         			    		if(start_time>job_dict[key].start_time||start_time==0){
+         			    			start_time = job_dict[key].start_time;
+         			    		}
+         			    	}
+         			    	else if("solved" in data){
+	         			    		nonErrorResults[key] = JSON.stringify(data);
+	         			    		good_jobs = good_jobs + 1;
+
+	         			    		finished_jobs = finished_jobs + 1;
+	         			    		job_dict[key].end_time = date.getTime();
+	         			    	    if(end_time<job_dict[key].end_time){
+	         			    		 	end_time = job_dict[key].end_time;
+	         			    		 	}
+	         			    		if(start_time>job_dict[key].start_time||start_time==0){
+	         			    		 	start_time = job_dict[key].start_time;
+	         			    		 }
+	         			    		 for (i in data.results){
+	         			    		 	 if(data.results[i].correct){
+	         			    		 	 	color = "#57A957";
+	         			    		 	 }
+	         			    		 	 else{
+	         			    		 	 	color = "#C43C35";
+	         			    		 	 }
+	         			    		 	 content = content + "<tr><td>"+data.results[i].call+"</td><td>"+data.results[i].expected+"</td><td>"+data.results[i].received+"</td><td style='color:white;background-color:"+color+"'>"+data.results[i].correct+"</td></tr>";
+	         			    		 }
+	         			    		 var header = '<div>Permutation '+key+'</div><pre>'+replaceHtmlEntites(job_dict[key].solution)+'</pre><table style="width:100%;" class="table-bordered"><tr><th>Call</th><th>Expected</th><th>Received</th><th>Correct</th></tr>';						
+
+								var footer = '</table><hr>';
+         			    		
+         			    		jQuery("#nonErrorResults_visual").append(jQuery(header+content+footer));
+
+         			    	}
+         			    	else{
+	         			    	fail_jobs     = fail_jobs + 1;
+         			    		finished_jobs = finished_jobs + 1;
+         			    		job_dict[key].intents = job_dict[key].intents + 1;
+         			    		if(job_dict[key].intents<max_intents){
+         			    			jobs.push(job_dict[key]);
+         			    			total_jobs = total_jobs + 1;
+         			    			retried_jobs = retried_jobs +1;
+         			    		} 
+         			    		else{
+         			    			
+         			    			var height = 24*key.length;
+         			    			jQuery("#fails").append(jQuery("<tr><td>Unknown</td><td>"+key+"</td><td><textarea style='width:100%; height:"+height+"px'>"+JSON.parse(atob(job_dict[key].jsonrequest)).solution+"</textarea></td></tr>"));
+         			    	}
+         			    	delete pool[key];
+         			    	var whost = job_dict[key].dump_url;
+         			    	delete busy_hosts[whost];
+         			    	if(whost in total_hosts){
+         			    		free_hosts[whost]=true;
+         			    	}
+         			    	check_ui();
+         			    	pool_check();
+         			    	}
+         			    	if(good_response){
+         			    		//draw response
+         			    		
+         			    		
+         			    		delete pool[key];
+         			    		var whost = job_dict[key].dump_url;
+         			    		delete busy_hosts[whost];
+         			    		if(whost in total_hosts){
+         			    		free_hosts[whost]=true;
+         			    		}
+         			        	pool_check();
+         			        }
+         			        check_ui();
+         			    },
+         			    "error": function(jqXHR, textStatus, errorThrown){
+         			    	var rx 	      = new RegExp("&key=([0-9]+)&", "g");
+							var match     = rx.exec(this.url);
+							var key       = match[1];
+         			    	fail_jobs     = fail_jobs + 1;
+         			    	finished_jobs = finished_jobs + 1;
+         			    	job_dict[key].intents = job_dict[key].intents + 1;
+         			    	if(job_dict[key].intents<max_intents){
+         			    		jobs.push(job_dict[key]);
+         			    		total_jobs = total_jobs + 1;
+         			    		retried_jobs = retried_jobs +1;
+         			    	} 
+         			    	else{
+         			    		var height = 24*key.length;
+         			    		jQuery("#fails").append(jQuery("<tr><td>"+textStatus+"</td><td>"+key+"</td><td><textarea style='width:100%; height:"+height+"px'>"+JSON.parse(atob(job_dict[key].jsonrequest)).solution+"</textarea></td></tr>"))
+         			    		stop = true;
+         			    	}
+         			    	delete pool[key];
+         			    	var whost = job_dict[key].dump_url;
+         			    	delete busy_hosts[whost];
+         			    	if( whost in total_hosts){
+         			    		free_hosts[whost]=true;
+         			    		
+         			    	}
+         			    	check_ui();
+         			    	pool_check();
+         			     }
+         				} ;
+         				
+         	jobs.push(new_job);
+         	job_dict[new_job.key] = new_job;
+         }
+         
+         total_jobs = Object.size(job_dict);
+       
+                     
+	}
+
+	function execute(job){
+		check_ui();
+		var date = new Date();
+		job.start_time = date.getTime();
+
+		jQuery.ajax({url: job.request_url,
+					 data:{"jsonrequest":job.jsonrequest,"key":job.key},
+					 dataType: 'jsonp',
+					 jsonp: job.callback,
+					 timeout:max_items*1000+10*1000,
+					 crossDomain:true,
+					 error:job.error,
+					 success:job.success
+					});	
+	}
+
+    function permute(a,b){
+    	var ret = new Array();
+    	var sub_ret = {};
+    	var element;
+    	var P1;
+    	var P2;
+    	var P1_JOIN;
+    	var P2_JOIN;
+    	for(element_a in a){
+    		for(element_b in b){
+    			if(b[element_b].indexOf(a[element_a][0])>=0){
+    				continue;
+    			}
+    			P1 = a[element_a].concat(b[element_b]);
+    			P2  = b[element_b].concat(a[element_a]);
+    			P1_JOIN = P1.join('');
+    			if ( P1_JOIN in sub_ret){
+    				continue;
+    			}
+    			else{
+    				
+    				ret.push(P1);
+    				sub_ret[P1_JOIN] = true;
+    				
+    			}
+    			P2_JOIN = P2.join('');
+    			if (P2_JOIN in sub_ret){
+    				continue;
+    			}
+    			else{
+    			
+	    			ret.push(P2);
+    				sub_ret[P2_JOIN] = true;
+    			}
+    			
+    		}
+    	}
+    	return ret;
+    }
+    
+    
+    function get_perm(n){
+		var i;
+		var range;
+		var permute_elementes;
+		var ret2;
+		var both;
+		var topadditional;
+		var top = [];
+		var bottom = [];
+		topadditional = 0;
+		limit = n;
+		
+		if (n>7){
+			both = parseInt((n-7)/2);
+			topadditional = (n-7)%2 + both;
+			limit = topadditional + 7;
+		}
+
+		i = 1 +topadditional;
+		range = new Array();
+		while(i<=limit){
+			range.push([i])
+			i = i +1;
+		}
+        i=1;
+        while(i<=topadditional){
+			top.push(i)
+			i = i +1;
+		}
+		i=limit+1;
+		
+		while(i<=n){
+			bottom.push(i)
+			i = i +1;
+		}
+		
+		ret2  = JSON.parse(JSON.stringify(range));
+		permute_elementes = JSON.parse(JSON.stringify(range));
+
+		i = 0;
+		while(i<(range.length-1)){
+			permute_elementes = JSON.parse(JSON.stringify(permute(range,permute_elementes)));
+			ret2 = ret2.concat(permute_elementes);
+			i = i +1;
+		}
+		for(i in ret2){
+			ret2[i] = top.concat(ret2[i]);
+			ret2[i] = ret2[i].concat(bottom);
+		}
+		return ret2;
+
+	}
+
+	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	//								UI Controllers 
+	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	function start(){
+		if (Object.size(pool)>0){
+			alert("I can not start if there are jobs in progress");
+			check_ui();
+			return;
+		}
+		reset();
+		create_jobs();
+		pool_check();
+	}
+
+	function pause(){
+		continue_add = false;
+	}
+	function _continue(){
+		continue_add = true;
+		pool_check();
+		check_ui();
+
+	}
+
+
+	function change_code_other_verifiers(){
+		if(!reset()){
+			return;
+		}
+		total_hosts = {}	
+		//free host
+		free_hosts = {}
+		//busy host
+		busy_hosts = {}
+
+		host_counter  = 0;
+
+		var i;
+
+		var agregator = '<tr id="server_aggregator">\
+		                  <td>\
+		                  <input id="other" type="text" placeholder="add server" style="height: 28px;width:400px; text-align: right;"/>\
+						  <input id="add_other" type="button" class="btn" onclick=\'new_ui_host(jQuery("#other").val())\' value="add">\
+						  </td>\
+						  </tr>';
+
+		jQuery("#host_table").empty();
+		jQuery("#host_table").append(jQuery(agregator));
+		var verifier = jQuery("input[name='ov']:checked").val();
+		var dict2 = {"java":{"solution":"int a=1;\nint b=2;",
+							 "tests":"assertEquals(1,a);\nassertEquals(2,b);",
+							 "hosts":["parserplayground-staging.appspot.com/java?id=1","parserplayground-staging.appspot.com/java?id=2"]},
+					"ruby":{"solution":"a = 1\nb = 2",
+						  "tests":"assert_equal(1,a)\nassert_equal(2,b)",
+						  "hosts":["parserplayground-staging.appspot.com/ruby?id=1","parserplayground-staging.appspot.com/ruby?id=2"]
+						  },
+					"javascript":{ "solution":"a=1;\nb=2;",
+						  "tests" : "assert_equal(1,a);\nassert_equal(2,b);",
+						  "hosts":["parserplayground-staging.appspot.com/javascript?id=1","parserplayground-staging.appspot.com/javascript?id=2"] },	  
+		             "custom":{"solution":"",
+		                  "tests":"",
+		                  "hosts":[]}
+					}
+	 	if(verifier in dict2){
+		   jQuery("#solutions").val(dict2[verifier].solution);
+		   jQuery("#tests").val(dict2[verifier].tests);
+		   for(i in dict2[verifier].hosts){
+				new_ui_host(dict2[verifier].hosts[i]);
+			}
+		}
+
+
+	}
+
+
+	function change_code(){
+		if(!reset()){
+			return;
+		}
+		var verifier = jQuery("#verifier").val();
+		var i;
+		if(verifier=="others"){
+			jQuery("#last_slash").css("display","none");
+			jQuery("#other_verifiers").css("display","block");
+			for(i in total_hosts){
+				no_others_host.push(i);
+			}
+			change_code_other_verifiers();
+			return;
+
+		}
+		else{
+			jQuery("#last_slash").css("display","table-cell");
+			jQuery("#other_verifiers").css("display","none");
+			if (no_others_host.length>0){
+				total_hosts = {}	
+				//free host
+				free_hosts = {}
+				//busy host
+				busy_hosts = {}
+
+				host_counter  = 0;
+				var agregator = '<tr id="server_aggregator">\
+		                  <td>\
+		                  <input id="other" type="text" placeholder="add server" style="height: 28px;width:400px; text-align: right;"/>\
+						  <input id="add_other" type="button" class="btn" onclick=\'new_ui_host(jQuery("#other").val())\' value="add">\
+						  </td>\
+						  </tr>';
+
+				jQuery("#host_table").empty();
+				jQuery("#host_table").append(jQuery(agregator));
+				for(i in no_others_host){
+					new_ui_host(no_others_host[i]);
+				}
+				no_others_host = [];
+
+			}
+
+
+		}
+		var dict = {"scipy":{"solution":"import scipy.interpolate\nx = numpy.arange(10,dtype='float32') * 0.3\ny = numpy.cos(x)\nrep = scipy.interpolate.splrep(x,y)\nsol =  scipy.interpolate.splev(0.5,rep)",
+							 "tests":">>> assert_almost_equal(sol, 0.87752449938946964)\nTrue"},
+					"oc":{"solution":"int b=2;\nfloat f = 123.45;\ndouble inches = 3*2;\nNSString *string1 = @\"This string is immutable\";",
+						  "tests":"AssertEquals(2, b);\nint expected_b = 2;\nAssertEquals(expected_b, b);\nAssertEquals((float)123.45, f);\nAssertEquals([NSString stringWithString:@\"This string is immutable\"], string1);"},
+					"c":{ "solution":"int sum(int a, int b){return a+b;}\nchar *message = \"Hello world!!!\";\nconst char *testStrings[] = { \"foo\", \"boo\", \"woo\", \"zoo\" };",
+						  "tests" :  "void test_sum(void){TEST_ASSERT(5==sum(2,3));}\nvoid test_hello_world(void){TEST_ASSERT_EQUAL_STRING(message, \"Hello world!!!\");}\nvoid testNotEqualStringArray1(void){ const char *expStrings[] = { \"foo\", \"boo\", \"woo\", \"zoo\" };\nTEST_ASSERT_EQUAL_STRING_ARRAY(expStrings, testStrings, 4);}" },	  
+		             "r":{"solution":"factorial <- function(n){\n if (n == 0) {return(1)}\n else {  return(n * factorial(n - 1)) }\n}",
+		                  "tests":">>> checkEquals(6, factorial(3))\nTrue"},
+		             "python":{"solution":"number = 2\nwizard = 'Oz'\ndef addOne(x):\n return x+1",
+		                  "tests":">>> number\n 2\n>>> wizard\n 'Oz'\n>>> addOne(2)\n  3"},
+		             "java":{"solution":"int a = 2;\nint b = 5;\nint c=a+1;\na=8+b-c;",
+		                  "tests":"assertEquals(10,a);\nassertEquals(3,c)"},
+		             "oldjsp":{"solution":"<%@ page import=\"java.util.*, java.text.*\" %><HTML><HEAD><TITLE>Hello Pineapples</TITLE></HEAD>\n<BODY><H1>Hello World</H1>\n<TABLE><TR><TD><P>This is an <B>embedded</B> table</P></TD></TR>\n<TR><TD>    The request parameter 'fruit' has a value of <%= request.getParameter(\"fruit\") %>\n</TD></TR></TABLE>\nToday is: <%= new SimpleDateFormat(\"dd/MM/yyyy\").format(new Date()) %>\n </BODY></HTML>",
+		                  "tests":"String expectedDate = new SimpleDateFormat(\"dd/MM/yyyy\").format(new Date());\npage().shouldHaveTitle(\"Hello Pineapples\");\npage().shouldContain(\"Today is: \"+expectedDate);\nonRequest(\"fruit\", \"guava\").page().shouldContain(\"The request parameter 'fruit' has a value of guava\");\npage().shouldContainElement(\"//TABLE/TR/TD/P/B\");\nelement(\"//TABLE/TR/TD/P/B\").shouldContain(\"embedded\");"},
+		             "ruby":{"solution":"a = 1\nb = 2",
+						  "tests":"assert_equal(1,a)\nassert_equal(2,b)",
+						  "hosts":["parserplayground-staging.appspot.com/ruby?id=1","parserplayground-staging.appspot.com/ruby?id=2"]
+						  },
+					 "jsp":{"solution":"<%@ page import=\"java.util.*, java.text.*\" %><HTML><HEAD><TITLE>Hello Pineapples</TITLE></HEAD>\n<BODY><H1>Hello World</H1>\n<TABLE><TR><TD><P>This is an <B>embedded</B> table</P></TD></TR>\n<TR><TD>    The request parameter 'fruit' has a value of <%= request.getParameter(\"fruit\") %>\n</TD></TR></TABLE>\nToday is: <%= new SimpleDateFormat(\"dd/MM/yyyy\").format(new Date()) %>\n </BODY></HTML>",
+		                  "tests":"String expectedDate = new SimpleDateFormat(\"dd/MM/yyyy\").format(new Date());\nDocument response = page.get();\nassertEquals(false,response.html().indexOf(\"Hello Pineapples\") == -1);\nassertEquals(false,response.html().indexOf(\"Today is: \"+expectedDate)==-1);\nresponse = page.get(\"fruit\", \"guava\");\nassertEquals(false,response.html().indexOf(\"The request parameter 'fruit' has a value of guava\")==-1);\nassertEquals(\"embedded\",response.select(\"table tr td p b\").html());"},
+					}
+	   if(verifier in dict){
+		   jQuery("#solutions").val(dict[verifier].solution);
+		   jQuery("#tests").val(dict[verifier].tests);
+		}
+		else{
+			jQuery("#solutions").val("");
+		    jQuery("#tests").val("");
+		}
+
+	}
+
+	function delete_ui_host(index){
+    	if(Object.size(total_hosts)==1){
+    		return false;
+    	}
+ 		var host = jQuery("#row_host_"+index).attr("host_val");
+        delete total_hosts[host];
+        delete free_hosts[host];
+        jQuery("#row_host_"+index).remove();
+
+    	
+    }
+    function new_ui_host(new_host){
+    	new_host = jQuery.trim(new_host);
+    	//add new host to the form
+    	if (new_host==""){
+    		return false;
+    	}
+    	if (new_host in total_hosts){
+    		return false;
+    	}
+    	jQuery('#server_aggregator').before(jQuery('<tr id="row_host_'+host_counter+'" host_val="'+new_host+'"><td><div style="float:left; margin-right:10px; text-align:center;overflow:hidden;padding-top:5px;height: 24px; width:400px; right; border: 1px solid black;">'+new_host+'</div> <input id="delete_host_'+host_counter+'" type="button" class="btn btn-danger" onclick="delete_ui_host('+host_counter+')" value="del"></td></tr>'));
+    	host_counter = host_counter +1;
+    	jQuery("#other").val("");
+    	total_hosts[new_host] = true;
+    	free_hosts[new_host] = true;
+    	
+    }
+    
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	//									eloops
+	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	function check_ui(){
+		var pbar_g=0;
+		var pbar_y=0;
+		var pbar_r=0;
+		pool_len = Object.size(pool);	
+		//set stats
+		jQuery("#total_jobs").text(total_jobs);
+		jQuery("#left_jobs").text(jobs.length);
+		jQuery("#retried_jobs").text(retried_jobs);
+		jQuery("#finished_jobs").text(finished_jobs);
+		jQuery("#good_jobs").text(good_jobs);
+		jQuery("#error_jobs").text(error_jobs);
+		jQuery("#fail_jobs").text(fail_jobs);
+		jQuery("#nonErrorResults").text(JSON.stringify(nonErrorResults));
+		if(total_jobs<=0){
+			progressbar = 0;
+		}
+		else{
+			progressbar = finished_jobs/total_jobs*100;
+			pbar_g = good_jobs/total_jobs*100;
+			pbar_y = error_jobs/total_jobs*100;
+			pbar_r = fail_jobs/total_jobs*100;
+		}
+
+		left_time = ((end_time-start_time)/finished_jobs)*(total_jobs-finished_jobs);
+		avg_time = ((end_time-start_time)/finished_jobs);
+		jQuery("#total_ne").text(Object.size(nonErrorResults));
+
+		jQuery("#pbar_g").css("width",pbar_g+"%");
+		jQuery("#pbar_y").css("width",pbar_y+"%");
+		jQuery("#pbar_r").css("width",pbar_r+"%");
+		jQuery("#time").text(__millisecondsToStr(end_time-start_time));
+		jQuery("#avg").text(__millisecondsToStr(avg_time));
+		jQuery("#remain_time").text(__millisecondsToStr(left_time));
+		if (pool_len>0){
+			jQuery("#verifier").attr("disabled","true");
+			block_add_widget();
+			if(continue_add){
+				//active pause
+				jQuery("#start").val("Pause");	
+				jQuery("#start").removeClass("btn-info");
+				jQuery("#start").removeClass("btn-success");
+				jQuery("#start").addClass("btn-danger");
+				jQuery("#start").attr("onclick","pause()");
+			}
+			else{
+				//pausing
+				jQuery("#start").val("Pausing....");	
+				jQuery("#start").removeClass("btn-danger");
+				jQuery("#start").removeClass("btn-success");
+				jQuery("#start").removeClass("btn-info");
+				jQuery("#start").attr("onclick","");
+			}
+
+		}
+	   else{
+	   	    if(jobs.length>0){
+	   	    	jQuery("#verifier").attr("disabled","true");
+	   	    	block_add_widget();
+	   	    	if(stop){
+	   	    		jQuery("#start").val("Error");	
+					jQuery("#start").removeClass("btn-info");
+					jQuery("#start").removeClass("btn-success");
+					jQuery("#start").addClass("btn-danger");
+				    jQuery("#start").attr("")
+
+	   	    	}
+	   	    	else{
+	   	    		jQuery("#start").val("Continue");	
+					jQuery("#start").removeClass("btn-danger");
+					jQuery("#start").removeClass("btn-success");
+					jQuery("#start").addClass("info");
+					jQuery("#start").attr("onclick","_continue()")	
+	   	    	}
+
+	   	    }
+	   	    else{
+	   	    	jQuery("#verifier").removeAttr("disabled");
+	   	    	unblock_add_widget();
+		   		job_len = Object.size(job_dict);
+		   		if(job_len>0){
+					if(can_upload_problem){
+						can_upload_problem = false;
+						if(current_problem_to_upload){
+							var to_upload = {};
+							to_upload["solution"]   = current_problem_to_upload["solution"];
+							to_upload["problem_id"] = current_problem_to_upload["problem_id"];
+							to_upload["nonErrorResults"] = nonErrorResults;
+							
+							response = jQuery.ajax({url: "http://www.singpath.com/jsonapi/update_mobile_problem",
+													data:JSON.stringify(to_upload),
+													type:"POST",
+													async:false
+										});	
+							if(response.status==200){
+								json_res = JSON.parse(response.responseText);
+								if("error" in json_res){
+									alert(json_res["error"]);
+								}
+								else{
+									 singpath[current_problem_to_upload["current_path"]][current_problem_to_upload["set_id"]][current_problem_to_upload["problem_id"]]["nonErrorResults"] = nonErrorResults;
+									 jQuery("#problem_status").html("<span class='label label-info'>Done</span>");
+								}
+							}
+							else{
+								alert("Error when I tried to update the problem");
+							}
+							
+							
+							
+						}
+					}
+					jQuery("#start").val("Done!");	
+					jQuery("#start").removeClass("btn-danger");
+					jQuery("#start").removeClass("btn-info");
+					jQuery("#start").addClass("btn-success");
+					jQuery("#start").attr("onclick","")	
+
+		   		}
+		   		else{
+		   			jQuery("#start").val("start");	
+					jQuery("#start").removeClass("btn-danger");
+					jQuery("#start").removeClass("btn-success");
+					jQuery("#start").addClass("info");
+					jQuery("#start").attr("onclick","start()")	
+		   		}
+			}
+		}
+	if(selector_blocked){
+		jQuery("#verifier").attr("disabled","true");
+	}
+
+	}
+	
+	function build_and_upload(){
+		can_upload_problem  = true;
+		start();
+	}
+	function pool_check(){
+		if (stop){
+			return;
+		}
+
+		if (!continue_add){
+			return;
+		}
+		if(jobs.length<1){
+			return;
+		}
+
+		var new_items;
+		var i=0;
+		var host;
+		var current;
+		var free_host_array =  []
+		var current_host;
+		var verifier;
+		//tranform free hosts into a array
+		for(host in free_hosts){
+			free_host_array.push(host);
+		}
+
+		if(free_host_array.length>0){
+			new_items = free_host_array.length;
+			while(i<new_items){
+
+				current_host = free_host_array[0];
+				free_host_array.splice(0,1);
+
+				delete free_hosts[current_host];
+
+				if(current_host in busy_hosts){
+					continue;
+				}
+				verifier = "/"+jQuery("#verifier").val();
+				verifier = verifier=="/others"?"":verifier;
+				current = jobs[i];
+				jobs.splice(i,1);
+				pool[current.key]   = current;
+				current.request_url = "http://"+current_host+verifier; 
+				current.dump_url    = current_host; 
+				busy_hosts[current_host] = true
+				execute(current);
+				i = i + 1;
+			}
+
+		}
+
+	}
+
+	function show_perms(){
+		//check and show to the user the current lines and permutations
+                 var lines;
+                 var lines2;
+                 var num_of_lines;
+                 var idx;
+                 var sub_line;
+  
+		 lines = jQuery("#solutions").val().split("\n");
+                 lines2 = new Array();
+                 for (sub_line in lines){
+                      if(jQuery.trim(lines[sub_line])==""){
+                         continue;
+                      }
+                   lines2.push(jQuery.trim(lines[sub_line]));
+                 }
+                 lines = lines2; 
+        
+		 num_of_lines = lines.length;
+                 
+                 idx = "" + num_of_lines;
+                 if (!(idx in perms_cache)){
+			perms_cache[idx]  = get_perm(num_of_lines).length;
+                     
+		}
+		jQuery("#current_lines").text(num_of_lines);
+		jQuery("#current_permutations").text(perms_cache[idx]);
+	}
+
+	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	//									utils 
+	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	function __millisecondsToStr(milliseconds){
+	    // TIP: to find current time in milliseconds, use:
+	    // var milliseconds_now = new Date().getTime();
+
+	    var seconds = milliseconds / 1000;
+	    var numyears = Math.floor(seconds / 31536000);
+	    if(numyears){
+	        return numyears + ' year' + ((numyears > 1) ? 's' : '');
+	    }
+	    var numdays = Math.floor((seconds % 31536000) / 86400);
+	    if(numdays){
+	    	numdays = Math.floor(100*(seconds % 31536000) / 86400)/100;
+	        return numdays + ' day' + ((numdays > 1) ? 's' : '');
+	    }
+	    var numhours = Math.floor(((seconds % 31536000) % 86400) / 3600);
+	    if(numhours){
+	    	numhours = Math.floor(100*((seconds % 31536000) % 86400) / 3600)/100;
+	        return numhours + ' hour' + ((numhours > 1) ? 's' : '');
+	    }
+	    var numminutes = Math.floor((((seconds % 31536000) % 86400) % 3600) / 60);
+	    if(numminutes){
+	    	numminutes = Math.floor(100*(((seconds % 31536000) % 86400) % 3600) / 60)/100;
+	        return numminutes + ' minute' + ((numminutes > 1) ? 's' : '');
+	    }
+	    var numseconds = (((seconds % 31536000) % 86400) % 3600) % 60;
+	    if(numseconds){
+	        return  Math.floor(numseconds*100)/100 + ' second' + ((numseconds > 1) ? 's' : '');
+	    }
+	    return 'less then a second'; //'just now' //or other string you like;
+		}
+	//get_size of a associate array
+	Object.size = function(obj) {
+		var size = 0, key;
+		for (key in obj) {
+			if (obj.hasOwnProperty(key)) size++;
+		}
+		return size;
+	};
+	
+	//====================================================================================================================
+	//====================================================================================================================
+	//									               singpath plugin 
+	//====================================================================================================================
+	//====================================================================================================================
+	
+	
+	var problemsets = [];
+	var problems = [];
+	var singpath = {};
+	var total_problems = {};
+	
+	function block_add_widget(){
+		jQuery("#problemsets").attr("disabled",true);
+		jQuery("#problem_set_id").attr("disabled",true);
+		jQuery("#problem_id").attr("disabled",true);
+		
+		jQuery("#get_problemsets").attr("disabled",true);
+		jQuery("#get_problem_set_id").attr("disabled",true);
+		jQuery("#get_problem_id").attr("disabled",true);
+		
+		jQuery("#linux_languages").attr("disabled",true);
+		jQuery("#google_languages").removeAttr("disabled");
+		
+		jQuery("#singpath_controller select").each(function(index,value){
+			jQuery(value).attr("disabled",true);
+		})
+		
+		
+	}
+	
+	function unblock_add_widget(){
+		jQuery("#problemsets").removeAttr("disabled");
+		jQuery("#problem_set_id").removeAttr("disabled");
+		jQuery("#problem_id").removeAttr("disabled");
+		
+		jQuery("#get_problemsets").removeAttr("disabled");
+		jQuery("#get_problem_set_id").removeAttr("disabled");
+		jQuery("#get_problem_id").removeAttr("disabled");
+		
+		jQuery("#linux_languages").removeAttr("disabled");
+		jQuery("#google_languages").removeAttr("disabled");
+		
+		jQuery("#singpath_controller select").each(function(index,value){
+			jQuery(value).removeAttr("disabled");
+		})
+		
+	}
+	
+	function get_problemsets(id){
+		get_selected_language();
+		block_add_widget();
+		var request_url = "http://www.singpath.com/jsonapi/problemsets/"+id;
+		jQuery.ajax({url: request_url,
+					 data:{},
+					 dataType:'jsonp',
+					 jsonp:   "callback",
+					 async: false,
+					 timeout:60*1000,
+					 crossDomain:true,
+					 error:function(){
+					 	alert("Unknow error, when I try to get the problemsets")
+					 	unblock_add_widget();
+					 	change_path();
+					 },
+					 success:function(data){
+					 	    if("error" in data){
+					 	    	alert(data["error"]);
+					 	    	unblock_add_widget();
+					 	    	change_path();
+					 	    }
+					 	    else if ("problemsets" in data){
+					 	          if (data.problemsets.length == 0){
+					 	          	alert("not problemsets found, :(");
+					 	          	unblock_add_widget();
+					 	          	change_path();
+					 	          }
+					 	          else{
+					 	          		problemsets = data.problemsets;
+					 	          		get_problem_set_id();
+					 	          }
+					 	    }
+					 	    else{
+					 	    	alert("Getting unknow data :(");
+					 	    	unblock_add_widget();
+					 	    	change_path();
+					 	    	
+					 	    }
+					 }
+					});	
+		
+	}
+	total_problems_set = 0
+	function get_problem_set_id(id){
+		get_selected_language();
+		block_add_widget();
+		var sets = [];
+		var i;
+		if(!id){
+			for (i in problemsets){
+				sets.push(problemsets[i].id);
+			}
+		}
+		else{
+			    sets.push(id);
+		}
+		if(sets.length==0){
+			alert("I could not found problemsets for do the query.")
+			return;
+		}
+		total_problems_set =  sets.length;
+		
+		for(i in sets){
+			request_url = "http://www.singpath.com/jsonapi/problems/"+sets[i];
+			jQuery.ajax({url: request_url,
+					 data:{},
+					 dataType: 'jsonp',
+					 jsonp: "callback",
+					 async: false,
+					 timeout:60*1000,
+					 crossDomain:true,
+					 error:function(){
+					 	alert("Unknow error, when I try to get the problems");
+					 	total_problems_set = total_problems_set -1;
+					 	if (total_problems_set==0){
+					 	    	problemsets = [];
+					 	    	if(problems.length==0){
+					 	    		unblock_add_widget();
+					 	    		change_path();
+					 	    	}
+					 	    	else{
+					 	    		get_problem_id();
+
+					 	    	}					 	    	
+					 	}
+					 },
+					 success:function(data){
+					 	    if("error" in data){
+					 	    	alert(data["error"]);
+					 	    }
+					 	    else if ("problems" in data){
+					 	    	
+					 	         problems = problems.concat(data.problems);
+					 	    }
+					 	    else{
+					 	    	alert("Getting unknow data :(");	
+					 	    }
+					 	    total_problems_set = total_problems_set-1;
+					 	    if (total_problems_set==0){
+					 	    	problemsets = [];
+					 	    	if(problems.length==0){
+					 	    		unblock_add_widget();
+					 	    		change_path();
+					 	    	}
+					 	    	else{
+					 	    		get_problem_id();
+
+					 	    	}					 	    	
+					 	    }
+					 }
+					});	
+		}		
+	}
+	
+	total_problems = 0
+	function get_problem_id(id){
+		get_selected_language();
+		var i;
+		if(id){
+			block_add_widget();
+			request_url = "http://www.singpath.com/jsonapi/mobile_problem/"+id;
+			jQuery.ajax({url: request_url,
+					 data:{},
+					 dataType: 'jsonp',
+					 jsonp: "callback",
+					 async: false,
+					 timeout:60*1000,
+					 crossDomain:true,
+					 error:function(){
+					 	alert("Unknow error, when I try to get the problems");
+					 	unblock_add_widget();
+					 },
+					 success:function(data){
+					 	    if("error" in data){
+					 	    	alert(data["error"]);
+					 	    	unblock_add_widget();
+					 	    	change_path();
+					 	    }
+					 	    else{
+					 	    	clear_problems_selectors();
+					 	    	draw_problem(data);
+					 	    	draw_problems_selectors();
+					 	    	unblock_add_widget();
+					 	    	change_path();
+					 	    }
+					    }
+					});	
+		}
+		else{
+			for (i in problems)  {
+				clear_problems_selectors();
+				draw_problem(problems[i]);
+				draw_problems_selectors();
+				
+			}
+			unblock_add_widget();
+			change_path();
+		}
+				
+		
+}
+
+function clear_problems_selectors(){
+	jQuery("#sets").empty();
+	jQuery("#problems_box").empty();
+	jQuery("#paths").empty();
+}
+function draw_problems_selectors () {
+		for (i in singpath){
+		jQuery("#paths").append(jQuery("<option >"+i+"</option>"));
+		jQuery("#sets").append(jQuery("<select style='width: 190px;display:none;' onchange='change_set();' id='path_"+i+"'></select>"));
+		for(j in singpath[i]){
+			jQuery("#path_"+i).append(jQuery("<option>"+j+"</option>"));
+			jQuery("#problems_box").append(jQuery("<select style='width: 170px;display:none;' id='set_"+j+"' onchange='change_problem();'></select>"));
+			for(k in singpath[i][j]){
+				jQuery("#set_"+j).append(jQuery("<option>"+k+"</option>"));
+			}
+		}
+	}
+  
+}
+function draw_problem(problem){
+	
+	var path_id = problem.path_id;
+	var problemset_id = problem.problemset_id;
+	var id = problem.id;
+	var i;
+	var j;
+	var k;
+	if (path_id in singpath){
+		if (problemset_id in singpath[path_id]){
+			singpath[path_id][problemset_id][id] = problem;
+			singpath[path_id][problemset_id][id]["language"] = get_selected_language();
+			total_problems[id] = singpath[path_id][problemset_id][id];
+			
+		}
+		else{
+			singpath[path_id][problemset_id] = {}
+			singpath[path_id][problemset_id][id] = problem;
+			singpath[path_id][problemset_id][id]["language"] = get_selected_language();
+			total_problems[id] = singpath[path_id][problemset_id][id];
+			
+		}
+	}
+	else{
+		singpath[path_id] = {};
+		singpath[path_id][problemset_id] = {}
+		singpath[path_id][problemset_id][id] = problem;
+		singpath[path_id][problemset_id][id]["language"]   = get_selected_language();
+		total_problems[id] = singpath[path_id][problemset_id][id];
+		
+	}
+
+}	
+
+var current_set = null;
+var current_problem = null;
+
+
+function change_path(){
+	var current_path = jQuery("#paths").val();
+	if(current_set){
+		current_set.css("display","none")
+	}
+	current_set = jQuery("#path_"+current_path);
+	current_set.css("display","inline-block");
+	change_set();jQuery("#languages").attr("disabled",true);
+}
+
+function change_set(){
+	var current_set_id = current_set.val();
+	if(current_problem){
+		current_problem.css("display","none")
+	}
+	current_problem = jQuery("#set_"+current_set_id);
+	current_problem.css("display","inline-block");
+	change_problem();
+
+	
+}
+
+function get_selected_language(){
+	if(jQuery("#linux_languages").val()!=""){
+		return "linux," + jQuery("#linux_languages").val();
+	}
+	if(jQuery("#google_languages").val()!=""){
+		return "google," +jQuery("#google_languages").val();
+	}
+	alert("Error, language not defined");
+	throw "Error, language not defined";
+	
+}
+
+function change_problem(){
+	var current_problem_id = parseInt(current_problem.val());
+	var current_set_id = parseInt(current_set.val());
+	var current_path = parseInt(jQuery("#paths").val());
+	var problem =  singpath[current_path][current_set_id][current_problem_id];
+	if(!problem){return;}
+	current_problem_to_upload = {};
+	current_problem_to_upload["nonErrorResults"] = {}
+	current_problem_to_upload["problem_id"] 	 = current_problem_id
+	current_problem_to_upload["solution"] 		 = problem["solution"]
+	current_problem_to_upload["set_id"] 		 = current_set_id
+	current_problem_to_upload["current_path"] 	 = current_path
+	
+
+	
+	var current_lang = problem["language"];
+	jQuery("#problem_language").html(current_lang.split(",")[1]);
+	
+	//block verifier ui selector
+	selector_blocked= true;
+	
+	if(current_lang.split(",")[0]=="linux"){
+		var linux = {"r":"r",
+	             "scipy":"scipy",
+	             "c":"c",
+	             "objetive c":"oc",
+				 "python":"python",
+				 "java"	 : "java",
+				 "ruby"  : "ruby",
+				 "jsp"   : "jsp"
+				};
+		var value = linux[current_lang.split(",")[1]];
+		jQuery("#verifier option[value="+value+"]").attr("selected",true);
+		change_code();
+		
+	}
+	else{
+		var google = {
+				 "java"	 : "java",
+				 "ruby"  : "ruby",
+				 "javascript"   : "javascript"
+				};
+		var value = google[current_lang.split(",")[1]];
+		jQuery("#verifier option[value=others]").attr("selected",true);
+		change_code();
+		jQuery("#other_verifiers input[value="+value+"]").attr("checked","checked");
+		change_code_other_verifiers();
+		
+	}
+	
+	
+	 if(Object.size(problem["nonErrorResults"])>0){
+	 	jQuery("#problem_status").html("<span class='label label-info'>Done</span>");
+	 }
+	 else{
+	 	jQuery("#problem_status").html("<span class='label label-important'>Unfinished</span>");
+	 }
+	 jQuery("#solutions").val(problem["solution"]);
+	 jQuery("#tests").val(problem["examples"]);
+	 show_perms();	
+	 jQuery("#problem_description").empty();
+	 jQuery("#problem_description").html('<pre style="font-weight: bolder;">Description of '+problem["name"]+' - Level '+problem["problemsetorder"]+'</pre><pre>'+problem["description"]+'</pre>'); 
+	}
+
+</script>
+
+<style>
+	select {
+		margin-bottom:0px!important;
+	}
+	input {
+		margin-bottom:0px!important;
+	}
+	#host-controller td {
+		border: 0px;
+		
+	}
+	#host-controller  {
+		border: 0px;
+		
+	}
+</style>
+<script>
+ jQuery().ready(function(){
+        //jQuery("#progressbar").progressbar({ value: 0});
+        new_ui_host("54.251.51.97")
+        
+        
+        change_code();
+        show_perms();
+        jQuery("#linux_languages").change(function(){
+        	if(jQuery("#linux_languages").val()==""){
+        		jQuery("#google_languages").removeAttr("disabled");
+        		
+        	}
+        	else{
+        		jQuery("#google_languages").attr("disabled",true);
+        	}
+        	
+        });
+        
+        jQuery("#google_languages").change(function(){
+        	if(jQuery("#google_languages").val()==""){
+        		jQuery("#linux_languages").removeAttr("disabled");
+        		
+        	}
+        	else{
+        		jQuery("#linux_languages").attr("disabled",true);
+        	}
+        	
+        });
+    }); 
+</script>
+
+</head>	
+
+<body>
+	
+	
+	<table class="table table-condensed" style="border:0px;">
+		<tbody>
+			<tr >
+				<td style="border:0px;min-width:300px;max-width:300px;width:300px;height: 100%">
+					<div id="singpath_plugin" style="width: 250px;margin-left: 40px;margin-top: 60px;">
+		          <pre style="font-weight: bolder;">Singpath Plugin</pre>
+					<table class="table-bordered" >
+						<tr>
+							<td> 
+								Linux verifiers
+								<select id="linux_languages">
+									<option selected="selected"></option>
+									<option>r</option>
+									<option>scipy</option>
+									<option>c</option>
+									<option>objetive c</option>
+									<option>python</option>
+									<option>java</option>
+									<option>ruby</option>
+									<option>jsp</option>
+								</select>
+								Google verifiers
+								<select id="google_languages" >
+									<option selected="selected"></option>
+									<option>java</option>
+									<option>javascript</option>
+									<option>ruby</option>
+
+								</select>
+							</td>
+						</tr>
+						<tr><td><input id="problemsets" type="text" placeholder="problemsets" style="height: 28px;width:175px; text-align: right;"/> <input id="get_problemsets" type="button" class="btn btn-success" onclick="get_problemsets(jQuery('#problemsets').val());jQuery('#problemsets').val('');" value="get"></td></tr>
+						<tr><td><input id="problem_set_id" type="text" placeholder="problem set id" style="height: 28px;width:175px; text-align: right;"/> <input id="get_problem_set_id" type="button" class="btn btn-success" onclick="get_problem_set_id(jQuery('#problem_set_id').val());jQuery('#problem_set_id').val('');" value="get"></td></tr>
+						<tr><td><input id="problem_id" type="text" placeholder="problem id" style="height: 28px;width:175px; text-align: right;"/> <input id="get_problem_id" type="button" class="btn btn-success" onclick="get_problem_id(jQuery('#problem_id').val());jQuery('#problem_id').val('');" value="get"></td></tr>
+					</table>
+					<table style="margin-top: 20px;" class="table-bordered" id="singpath_controller">
+						<tbody>
+							<tr><td><span>Path:    </span><select style="width: 190px" id="paths" onchange="change_path();"></select></td></tr>
+							<tr><td><span>Sets:    </span><span id="sets"></span></td></tr>
+							<tr><td><span>Problem: </span><span id="problems_box"></span></td></tr>
+							<tr><td><span>Language: </span><span id="problem_language"></span></td></tr>
+							<tr><td><span>Status: </span><span id="problem_status"></span></td></tr>
+							<tr><td style="text-align: center;"><input id="solve_upload_btn" type="button" class="btn btn-info" onclick="build_and_upload();" value="solve and upload"></td></tr>
+							<tr> </tr>
+							<tr></tr>
+							<tr></tr>
+						</tbody>
+					</table>
+				</div>
+					
+					
+				</td>
+				<td style="border:0px;max-width: 900px;width: 800px;">
+					
+	<div id="content" style="text-align: center; margin-top: 40px;">
+		<table class="table-bordered">
+		<tr>
+			<td>
+				<div>
+				<table id="host-controller" class="table-bordered">
+					<tbody>
+						<tr>
+							<td style="vertical-align: middle;"><label for="host" style="float:none;">http://</label></td>
+							<td>
+								<table class="table-condensed" id ="host_table">
+									<tr id="server_aggregator">
+										<td>
+										<input id="other" type="text" placeholder="add server" style="height: 28px;width:400px; text-align: right;"/>
+										<input id="add_other" type="button" class="btn" onclick='new_ui_host(jQuery("#other").val())' value="add">
+										</td>
+									</tr>
+								</table>
+
+							</td>
+							<td id="last_slash" style="vertical-align: middle;">/</td>
+							<td style="vertical-align: middle;">
+								 <select id="verifier" onchange="change_code();show_perms();">
+									<option value="r">r</option>
+									<option value="scipy">scipy</option>
+									<option value="c">c</option>
+									<option value="oc">oc</option>
+									<option value="python">python</option>
+									<option value="java">java</option>
+									<option value="ruby">ruby</option>
+									<option value="jsp">jsp</option>
+									<option value="oldjsp">oldjsp</option>
+									<option value="others">others</option>
+								</select>
+								<div id="other_verifiers">
+									<input type="radio" name="ov" onchange="change_code_other_verifiers();" value="java" checked> Java 
+									<input type="radio" name="ov" onchange="change_code_other_verifiers();" value="javascript" > JavaScript 
+									<input type="radio" name="ov" onchange="change_code_other_verifiers();" value="ruby"> Ruby<br>
+									<input type="radio" name="ov" onchange="change_code_other_verifiers();" value="custom"> Custom
+								</div>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				</div>
+				<pre>Solution:</pre>
+				<textarea id="solutions" onchange="show_perms();" onblur="show_perms();"  onkeypress="show_perms();" onkeyup="show_perms();" onkeydown="show_perms();" style="width: 100%;height: 250px;"></textarea>
+				<pre>Tests:</pre>
+				<textarea id="tests" style="width: 100%;height: 250px;"></textarea>
+			</td>
+		</tr>
+	
+		<tr>
+		<td style="text-align: right;">
+		<span>Lines: </span><span id="current_lines"> 0</span>
+		<span>Permutation: </span><span id="current_permutations"> 0</span>
+		<input type="button" onclick="start();" style="float:none;"class="btn btn-info" id="start" value="Start" />
+		<input type="button" onclick="reset();" style="float:none;"class="btn btn-danger" id="reset" value="Reset" />
+		</td>
+		</tr>
+	
+	<tr>
+		<td>
+			<table class="table-bordered" style="width:100%;">
+				<tbody>
+					<tr>
+						<td>Number of permutations checked</td> <td><span id="finished_jobs"></span>  </td>
+					</tr>
+					<tr>
+						<td>Number of permutations still to be checked</td> <td><span id="left_jobs"></span>  </td>
+					</tr>
+					<tr>
+						<td>Number of passing permutations</td> <td><span id="good_jobs" style="color: green"></span> </td>
+					</tr>
+					<tr>
+						<td>Number of error permutations</td> <td><span id="error_jobs"></span> </td>
+					</tr>
+					<tr>
+						<td>Number of failing permutations</td> <td><span id="fail_jobs" style="color:red"></span>  </td>
+					</tr>
+					<tr>
+						<td>Number of re-tried permutations </td> <td><span id="retried_jobs" style="color:red"></span>  </td>
+					</tr>
+					<tr>
+						<td>Total Permutations</td> <td><span id="total_jobs"></span  </td>
+					</tr>
+				</tbody>
+				
+				
+			</table>
+			
+			<div style="margin-top: 20px;" class="progress progress-striped active" >
+				<div id="pbar_g" class="bar bar-success" style="width: 0%;"></div>
+				<div id="pbar_y" class="bar bar-warning" style="width: 0%;"></div>
+				<div id="pbar_r" class="bar-danger" style="width: 0%;"></div>
+			</div>
+			<table class="table-bordered" style="width:100%;">
+				<tbody>
+					<tr>
+						<td>Rebuilding time</td>
+						<td><div id="time" style="text-align: center"></div></td>
+					</tr>
+					<tr>
+						<td>Remain time</td>
+						<td><div id="remain_time" style="text-align: center"></div></td>
+					</tr>
+					<tr>
+						<td>Average time by permutation</td>
+						<td><div id="avg" style="text-align: center"></div></td>
+					</tr>
+				</tbody>
+			</table>
+			
+			
+			
+
+		</td>
+	</tr>
+	<tr>
+		<td>
+			Total NonErrorPermutations <span id="total_ne"></span><hr>
+			<div id="nonErrorResults_visual" style="text-align: center">
+			</div>
+
+		</td>
+	</tr>
+
+	<tr>
+		<td>
+			<div> so far nonErrorResults</div>
+			<div id="nonErrorResults" style="text-align: center"></div>
+
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<div> fail jobs after max_intents</div>
+			<table class="table-bordered" id="fails" style="width:100%;text-align: center">
+				<tr><th>Error</th><th>Permutation</th><th>code</th><tr>
+			</table>
+
+		</td>
+	</tr>
+	</table>
+
+	<br>
+	</div>
+					
+				</td>
+				<td style="border:0px;">
+					<div style="margin-top:200px;"></div>
+					<div id="problem_description">
+						
+					</div>
+				</td>
+			</tr>
+		</tbody>	
+	</table>
+
+	
+</body>
+</html>
+
+

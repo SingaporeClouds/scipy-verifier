@@ -176,24 +176,10 @@ class VerifierHandler(tornado.web.RequestHandler):
         self.write(result)
         self.finish()
     
-    
-class TestHandler(tornado.web.RequestHandler):
-    def get(self,filename):
-        self.set_header("Content-type","text/html")
-        try:
-            _file = open(folder +"/testers/"+filename+".html")
-        except:
-            self.write("Tester page not found")
-            return
-        
-        content = _file.read()
-        _file.close()
-            
-        self.write(content)
 
 application = tornado.web.Application([
     (r"^/current/commit$", CommitHandler),
-    (r"^/test/([a-zA-Z0-9_]+)", TestHandler),                                
+    (r"^/test/(.*)", tornado.web.StaticFileHandler, {"path": "./python_server/testers"}),                                
     (r"^/([a-zA-Z0-9_]+)", VerifierHandler),
 ])
 

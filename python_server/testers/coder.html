@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<!--
+				============================================================================================================
+											              Externals libraries 
+				=============================================================================================================
+			-->
+<!--jQuery (is needed for bootstrap and do css selection) http://jquery.com/-->
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+<!--jQuery UI (manage the resizable behaviour of the editor and the vconsole) http://jqueryui.com/-->
+<script src="http://code.jquery.com/ui/1.9.2/jquery-ui.js"></script>
+<!--bootstrap javascript (dropdown menu animation) http://twitter.github.com/bootstrap/-->
+<script src="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/js/bootstrap.min.js"></script>
+<!--ace /editor library) http://ace.ajax.org/-->
+<script src="src/ace.js" type="text/javascript" charset="utf-8"></script>
+<!--
+				==============================================================================================================
+											          Externals styles libraries 
+				===============================================================================================================
+			-->
+<!--bootstrap css http://twitter.github.com/bootstrap/-->
+<link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet">
+<!-- delete customs styles of the browsers http://developer.yahoo.com/yui/reset/-->
+<link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/3.7.3/build/cssreset/cssreset-min.css">
+<!--jQueryUI css http://jquery.com/-->
+<link rel="stylesheet" type="text/css" href="http://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css">
+<!-- 
+				menubar functions
+			-->
+<script>
+				//run the script
+				function run(){
+					//add  default class that block pointer events
+					jQuery("#vconsole_text").addClass("ace_layer");
+					jQuery("#vconsole_text").addClass("ace_text-layer");
+					
+					//obtain code
+					var code = editor.getValue();
+					
+					//create json request use base64 for encode request
+					var jsonrequest = btoa(JSON.stringify({"solution":code}));
+					
+					//obtain current language verifier url
+					var verifier_url = "http://" + verifiers_host+ "/"+verifiers_dict[current_language];
+					
+					//defone default time out as 30s
+					var default_timeout = 30*1000;
+					
+					//start time counter
+					var date = new Date();
+					var start_time = date.getTime();
+					
+					//run the code
+					var response = 	jQuery.ajax({ url: verifier_url
+									 ,data:{"jsonrequest":jsonrequest,"only_play":true}
+									 //allow jsonp call
+									 ,dataType: 'jsonp'
+									 //callback function (must be implemented on the server)
+									 ,jsonp: "vcallback"
+									 ,timeout:default_timeout
+									 //allow crossdomain
+									 ,crossDomain:true
+									 //define success function
+									 ,success: function(data){
+									 			if(data.printed){
+									 			  vconsole.setValue(data.printed);
+									 			}
+									 			//if there exist error in the code
+									 			else if(data.errors){
+								
+									 			  //set console value with the error
+									 			  vconsole.getSession().setValue(data.errors);
+									 			  
+									 			  var format_code =  function() {
+									 			  		//colorize the errors in red
+													    jQuery("#vconsole .ace_line").each(function(index,value){
+													    	//remove default class that block pointer events
+													    	jQuery(value).parent().removeClass("ace_layer");
+													    	jQuery(value).parent().removeClass("ace_text-layer");
+													    	//colorize the errors in red
+									 			  			jQuery(value).attr("style",jQuery(value).attr("style")+";color: crimson;");
+									 			  			//create link to the bugs lines in the code
+									 			  			var text = jQuery(value).text();
+									 			  			//reg exp for the buggy lines
+									 			  			var rx = new RegExp('File.*submitted.*code.*line[^0-9]*([0-9]+)');
+									 			  			var match = rx.exec(text);
+									 			  			if(match){
+									 			  				text = text.replace(match[0],'<a style="text-decoration: underline;" href="javascript:editor.gotoLine('+match[1]+')">'+match[0]+'</a>');
+									 			  				jQuery(value).html(text);
+									 			  			}
+									 			  			
+									 			  		})
+									 			  		
+									 			  		
+												  }
+												  //call the function with a delay of a second, <- best solution for the moment that I found for format the console code
+									 			  window.setTimeout(format_code,1000);
+									 			  
+									 			}
+									 	
+									 		}
+									 });	
+			
+			    }
+			    
+			    //add functionality to the language_dropdown 
+			    function setup_language_dropdown(){
+			    	//add onclik event to each item of the dropdown list
+			    	jQuery(".language_selector").click(function(){
+			    		var element = jQuery(this);
+			    		//set current language
+			    		current_language  = element.attr("language");
+			    		//change language of the editor
+			    		editor.getSession().setMode("ace/mode/"+ace_dict[current_language]);
+			    		//change ui language
+			    		jQuery("#showed_language").text(element.text());   		
+			    	})
+			    }
+			    //add functionality to the theme_dropdown 
+			    function setup_theme_dropdown(){
+			    	//add onclik event to each item of the dropdown list
+			    	jQuery(".theme_selector").click(function(){
+			    		var element = jQuery(this);
+			    		//get theme name
+			    		var theme   = element.attr("theme");
+			    		//change theme of the editor
+			    		editor.setTheme("ace/theme/"+theme);
+				    	vconsole.setTheme("ace/theme/"+theme);
+			    		//change ui language
+			    		jQuery("#showed_theme").text(element.text());   		
+			    	})
+			     }
+			    //add functionality to search input
+			    function setup_search_input(){
+			    	// search when a key is up on the text input 
+				    jQuery("#search_input").keyup(function(){
+				    								var element = jQuery(this);
+												    editor.findAll(element.val());
+												    vconsole.findAll(element.val());
+											});
+			   }
+			</script>
+<!-- 
+				===============================================================================
+				define global vars
+				initialize ace editor
+				initialize ui
+				===============================================================================
+			-->
+<script>
+			    //set host of the verifiers
+			    var verifiers_host = "54.251.51.97"
+			    //editor and vconsole global vars
+				var editor  = null;
+				var vconsole = null;
+				//set default programming language
+				var current_language = "python";
+				//define verifiers language dictionary
+				var verifiers_dict = { c : "c"
+						    		  ,java:"java"
+						    		  ,javascript:"javascript"
+						    		  ,jsp:"jsp"
+						    		  ,objectivec:"oc"
+						    		  ,python:"python"
+						    		  ,r:"r"
+						    		  ,ruby:"ruby"
+						    		  ,scipy:"scipy"
+						    		};
+				//define ace language dictionary
+				var ace_dict = { c : "c_cpp"
+					    		,java:"java"
+					    		,javascript:"javascript"
+					    		,jsp:"jsp"
+					    		,objectivec:"objectivec"
+					    		,python:"python"
+					    		,r:"r"
+					    		,ruby:"ruby"
+					    		,scipy:"python"
+						    };
+			    jQuery().ready(function(){
+			    	//load ace editor
+			    	vconsole = ace.edit("vconsole");
+				    editor = ace.edit("editor");
+				    //set theme
+				    editor.setTheme("ace/theme/ambiance");
+				    vconsole.setTheme("ace/theme/ambiance");
+				    //set language
+				    editor.getSession().setMode("ace/mode/"+ace_dict[current_language]);
+				    //remove an bothers line
+				    editor.setShowPrintMargin(false);
+				    vconsole.setShowPrintMargin(false);
+				    //console only can be read
+				    vconsole.setReadOnly(true); 
+				    //allow to resize the editor and vconsole
+				    $("#editor").resizable({maxHeight: 600,minHeight: 600,minWidth: 200,resize:function(){editor.resize()}});
+			    	//setup UI
+			    	setup_language_dropdown();
+			    	setup_theme_dropdown();
+			    	setup_search_input();
+			    	jQuery("#vconsole .ace_text-layer").attr("id","vconsole_text");
+			    	
+			    	 			  
+			    });
+			</script>
+<style type="text/css" media="screen">
+			   #editor { 
+			       	height: 600px;
+			    	width:50%;
+			    	display:inline-block;
+			    }
+			    #vconsole{
+			    	height: 600px;
+			    	width:45%;
+			    	display:inline-block;
+			    }
+
+			    .menubar{
+			   		padding-bottom:10px;
+			    }
+			  #layer{
+			  	width: 90%;
+			  	min-width: 800px;
+			  	margin:auto;
+			  	margin-top:40px;
+			  }
+			  .control-group.inline { 
+			    display: inline-block; 
+			    position: relative;
+				top: -6px;
+				margin-bottom: 0px;
+				height: 20px;
+			  }
+			  .control-group.inline .span2{ 
+				height: 16px!important;
+				width: 150px!important;
+			  }
+			  .control-group.inline .add-on{ 
+				height: 16px;
+			  }
+</style>
+</head>
+<body>
+<!--
+					menu 
+						--save
+						--open file
+						--run
+				!-->
+<!--
+				perspectives 
+			!-->
+<table id="layer">
+<tbody>
+<tr>
+	<td class="menubar">
+		<div>
+			<!--Run code-->
+			<a href="javascript:run();" class="btn btn-success btn-small"><i class="icon-play icon-white"></i> Run</a>
+			<!--code search input-->
+			<div class="control-group inline">
+				<div class="controls">
+					<div class="input-prepend">
+						<span class="add-on"><i class="icon-search"></i></span>
+						<input class="span2" placeholder="Search on your code" id="search_input" type="text">
+					</div>
+				</div>
+			</div>
+			<!--Open local file-->
+			<a href="#" class="btn btn-primary btn-small"><i class="icon-folder-open icon-white"></i> Open file</a>
+			<!--Download the code-->
+			<a href="#" class="btn btn-primary btn-small"><i class="icon-hdd icon-white"></i> Save</a>
+			<!--dropdown list for select the programming language-->
+			<div class="btn-group">
+				<a class="btn btn-small btn-inverse" href="#"><i class=" icon-pencil icon-white"></i> Language: <span id="showed_language">Python</span></a>
+				<a class="btn btn-inverse btn-small dropdown-toggle" style="height: 20px;" data-toggle="dropdown" href="#"><span class="caret"></span></a>
+				<ul class="dropdown-menu">
+					<li><a class="language_selector" language="c" href="#"><i class="icon-pencil"></i> C</a></li>
+					<li><a class="language_selector" language="java" href="#"><i class="icon-pencil"></i> Java</a></li>
+					<li><a class="language_selector" language="javascript" href="#"><i class="icon-pencil"></i> JavaScript</a></li>
+					<li><a class="language_selector" language="jsp" href="#"><i class="icon-pencil"></i> JSP</a></li>
+					<li><a class="language_selector" language="objectivec" href="#"><i class="icon-pencil"></i> Objective C</a></li>
+					<li><a class="language_selector" language="python" href="#"><i class="icon-pencil"></i> Python</a></li>
+					<li><a class="language_selector" language="r" href="#"><i class="icon-pencil"></i> R</a></li>
+					<li><a class="language_selector" language="ruby" href="#"><i class="icon-pencil"></i> Ruby</a></li>
+					<li><a class="language_selector" language="scipy" href="#"><i class="icon-pencil"></i> Scipy</a></li>
+				</ul>
+			</div>
+			<!--dropdown list for select the theme-->
+			<div class="btn-group">
+				<a class="btn btn-small btn-primary" href="#"><i class="icon-th icon-white"></i> Theme: <span id="showed_theme">Ambiance</span></a>
+				<a class="btn btn-primary btn-small dropdown-toggle" style="height: 20px;" data-toggle="dropdown" href="#"><span class="caret"></span></a>
+				<ul class="dropdown-menu">
+					<li><a class="theme_selector" theme="ambiance" href="#"><i class="icon-th"></i> Ambiance</a></li>
+					<li><a class="theme_selector" theme="chrome" href="#"><i class="icon-th"></i> Chrome</a></li>
+					<li><a class="theme_selector" theme="clouds" href="#"><i class="icon-th"></i> Clouds</a></li>
+					<li><a class="theme_selector" theme="clouds_midnight" href="#"><i class="icon-th"></i> Clouds_midnight</a></li>
+					<li><a class="theme_selector" theme="cobalt" href="#"><i class="icon-th"></i> Cobalt</a></li>
+					<li><a class="theme_selector" theme="crimson_editor" href="#"><i class="icon-th"></i> Crimson_editor</a></li>
+					<li><a class="theme_selector" theme="dawn" href="#"><i class="icon-th"></i> Dawn</a></li>
+					<li><a class="theme_selector" theme="dreamweaver" href="#"><i class="icon-th"></i> Dreamweaver</a></li>
+					<li><a class="theme_selector" theme="eclipse" href="#"><i class="icon-th"></i> Eclipse</a></li>
+					<li><a class="theme_selector" theme="github" href="#"><i class="icon-th"></i> Github</a></li>
+					<li><a class="theme_selector" theme="idle_fingers" href="#"><i class="icon-th"></i> Idle_fingers</a></li>
+					<li><a class="theme_selector" theme="kr_theme" href="#"><i class="icon-th"></i> Kr_theme</a></li>
+					<li><a class="theme_selector" theme="merbivore" href="#"><i class="icon-th"></i> Merbivore</a></li>
+					<li><a class="theme_selector" theme="merbivore_soft" href="#"><i class="icon-th"></i> Merbivore_soft</a></li>
+					<li><a class="theme_selector" theme="mono_industrial" href="#"><i class="icon-th"></i> Mono_industrial</a></li>
+					<li><a class="theme_selector" theme="monokai" href="#"><i class="icon-th"></i> Monokai</a></li>
+					<li><a class="theme_selector" theme="pastel_on_dark" href="#"><i class="icon-th"></i> Pastel_on_dark</a></li>
+					<li><a class="theme_selector" theme="solarized_dark" href="#"><i class="icon-th"></i> Solarized_dark</a></li>
+					<li><a class="theme_selector" theme="solarized_light" href="#"><i class="icon-th"></i> Solarized_light</a></li>
+					<li><a class="theme_selector" theme="textmate" href="#"><i class="icon-th"></i> Textmate</a></li>
+					<li><a class="theme_selector" theme="tomorrow" href="#"><i class="icon-th"></i> Tomorrow</a></li>
+					<li><a class="theme_selector" theme="tomorrow_night" href="#"><i class="icon-th"></i> Tomorrow_night</a></li>
+					<li><a class="theme_selector" theme="tomorrow_night_blue" href="#"><i class="icon-th"></i> Tomorrow_night_blue</a></li>
+					<li><a class="theme_selector" theme="tomorrow_night_bright" href="#"><i class="icon-th"></i> Tomorrow_night_bright</a></li>
+					<li><a class="theme_selector" theme="tomorrow_night_eighties" href="#"><i class="icon-th"></i> Tomorrow_night_eighties</a></li>
+					<li><a class="theme_selector" theme="twilight" href="#"><i class="icon-th"></i> Twilight</a></li>
+					<li><a class="theme_selector" theme="vibrant_ink" href="#"><i class="icon-th"></i> Vibrant_ink</a></li>
+					<li><a class="theme_selector" theme="xcode" href="#"><i class="icon-th"></i> Xcode</a></li>
+				</ul>
+			</div>
+		</div>
+	</td>
+</tr>
+<tr>
+	<td style="border: solid 1px #000000;">
+		<!--Code Editor-->
+		<div id="editor">def hi():
+    print "Hello world, this is my first code :)"
+    
+hi()</div>
+		<!--vconsole-->
+		<div id="vconsole"></div>
+	</td>
+</tr>
+</tbody>
+</table>
+
+<!-- form for save the file -->
+<form action="/files/save" method="POST">
+	<input type="code" value=""/>
+</form>
+
+<!-- form for upload the file -->
+<form action="/files/save" method="POST">
+	<input type="file" name="somename" size="chars"> 
+</form>
+
+</body>
+</html>
