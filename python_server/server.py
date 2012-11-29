@@ -141,6 +141,12 @@ class VerifierHandler(tornado.web.RequestHandler):
         vcallback = self.get_argument("vcallback", None)
         
         if run:
+            
+            #tell to verifier that only you want to run a code without test
+            only_play = self.get_argument("only_play", "0")
+            if only_play!="0":
+                only_play = "1"
+                        
             if verifierName in java_list:
                 try:
                     result = SendToJava(verifierName,jsonrequest)
@@ -154,7 +160,7 @@ class VerifierHandler(tornado.web.RequestHandler):
                 return
             else:
                 try:
-                    result = json.loads(Command("/usr/bin/env","python",folder+"/verifiers/%s"%verifiers_dict[verifierName],jsonrequest,timeout=5))
+                    result = json.loads(Command("/usr/bin/env","python",folder+"/verifiers/%s"%verifiers_dict[verifierName],jsonrequest,only_play,timeout=5))
                 except Empty:
                     s = "Your code took too long to return. Your solution may be stuck "+\
                         "in an infinite loop. Please try again."
