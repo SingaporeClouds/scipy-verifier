@@ -1,0 +1,35 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/> 
+<script type="text/javascript">
+function updateValue() {
+    var jsonrequest = document.getElementById('jsonrequest')
+    var solution = document.getElementById('solution')
+    var tests = document.getElementById('tests')
+    var obj = {solution: solution.value, tests: tests.value}
+    jsonrequest.value = JSON.stringify(obj)
+}
+</script>
+</head>
+<body>
+<h2>R verifier</h2>
+<br>
+Solution code:<br>
+<textarea id="solution" rows="10" cols="80">a=1;
+b=2;
+</textarea>
+
+<br>
+Tests:<br>
+<textarea id="tests" rows="10" cols="80">assert_equal(1,a);
+assert_equal(2,b);
+</textarea>
+<form action="/js" method="POST">
+<input type="hidden" name="jsonrequest" id="jsonrequest"/>
+<input type="submit" onclick="updateValue()"></input>
+</form>
+</body>
+</html>

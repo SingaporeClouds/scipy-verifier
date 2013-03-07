@@ -18,10 +18,10 @@
 
 package jsp2.examples.simpletag;
 
+import jsp2.examples.BookBean;
+
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.tagext.SimpleTagSupport;
-
-import jsp2.examples.BookBean;
 
 /**
  * SimpleTag handler that pretends to search for a book, and stores

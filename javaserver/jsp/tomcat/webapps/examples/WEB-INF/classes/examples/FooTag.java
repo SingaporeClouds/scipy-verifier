@@ -16,10 +16,9 @@
 */
 package examples;
 
-import java.io.IOException;
-
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspTagException;
+import java.io.IOException;
 
 /**
  * Example1: the simplest tag

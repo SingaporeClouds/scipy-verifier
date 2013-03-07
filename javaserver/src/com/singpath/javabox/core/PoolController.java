@@ -1,5 +1,7 @@
 package com.singpath.javabox.core;
 
+import org.apache.log4j.Logger;
+
 import java.io.DataOutputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
@@ -9,8 +11,6 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
-
-import org.apache.log4j.Logger;
 
 public class PoolController {
 

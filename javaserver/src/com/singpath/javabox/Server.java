@@ -1,12 +1,11 @@
 package com.singpath.javabox;
 
+import com.singpath.javabox.core.PoolController;
+import com.singpath.javabox.core.PooledServer;
+import com.singpath.javabox.core.QueueLoop;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-
-import com.singpath.javabox.core.PoolController;
-import com.singpath.javabox.core.QueueLoop;
-import com.singpath.javabox.core.PooledServer;
 
 public class Server {
 	

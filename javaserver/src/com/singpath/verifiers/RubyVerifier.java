@@ -1,17 +1,14 @@
 package com.singpath.verifiers;
 
-
-import com.singpath.verifiers.Verifier;
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import net.minidev.json.*;
-
+import net.minidev.json.JSONObject;
 import org.apache.log4j.BasicConfigurator;
 import org.jruby.Ruby;
 import org.jruby.RubyInstanceConfig;
 import org.jruby.RubyRuntimeAdapter;
 import org.jruby.javasupport.JavaEmbedUtils;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 
 

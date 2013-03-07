@@ -1,22 +1,16 @@
 package com.singpath.javabox.core;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.net.Socket;
-import java.util.UUID;
-
-import org.apache.log4j.Logger;
-
+import com.singpath.verifiers.JSPVerifier;
 import com.singpath.verifiers.JavaVerifier;
 import com.singpath.verifiers.RubyVerifier;
+import com.singpath.verifiers.JavaScriptVerifier;
 import com.singpath.verifiers.Verifier;
-import com.singpath.verifiers.JSPVerifier;
-
 import org.apache.commons.codec.binary.Base64;
+import org.apache.log4j.Logger;
+
+import java.io.*;
+import java.net.Socket;
+import java.util.UUID;
 
 public class Worker implements Runnable {
 	protected Logger log = null;
@@ -55,6 +49,12 @@ public class Worker implements Runnable {
 					instance = new JSPVerifier(uuid,
 							safeThreadGroup);
 				}
+
+				if (route.equals("js")) {
+                					instance = new JavaScriptVerifier(uuid,
+                							safeThreadGroup);
+                }
+
 				if(!instance.equals(null)){
 					return instance.process_problem(msg);
 				}

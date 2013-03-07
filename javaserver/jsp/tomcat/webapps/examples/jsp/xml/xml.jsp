@@ -18,10 +18,8 @@
 <jsp:root xmlns:jsp="http://java.sun.com/JSP/Page"
   version="1.2">
 <jsp:directive.page contentType="text/html"/>
-<jsp:directive.page import="java.util.Date, java.util.Locale"/>
-<jsp:directive.page import="java.text.*"/>
 
-<jsp:declaration>
+    <jsp:declaration>
   String getDateTimeStr(Locale l) {
     DateFormat df = SimpleDateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM, l);
     return df.format(new Date());

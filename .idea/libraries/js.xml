@@ -1,0 +1,8 @@
+<component name="libraryTable">
+  <library name="js">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/javaserver/libs/js.jar!/" />
+    </CLASSES>
+    <SOURCES />
+  </library>
+</component>

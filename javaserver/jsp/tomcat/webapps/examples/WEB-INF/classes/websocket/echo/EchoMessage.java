@@ -16,16 +16,15 @@
  */
 package websocket.echo;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.catalina.websocket.MessageInbound;
 import org.apache.catalina.websocket.StreamInbound;
 import org.apache.catalina.websocket.WebSocketServlet;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 
 
 public class EchoMessage extends WebSocketServlet {

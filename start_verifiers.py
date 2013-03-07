@@ -39,6 +39,7 @@ tomcat_pid = str(os.spawnv(os.P_WAIT,"/usr/bin/env",("sh",verifiers_home_dir+"/j
 
 
 pids = {"java":java_pid,"python":output}
+print pids
 os.chdir("/tmp")
 _file = open("singpath_pids","w+")
 _file.write(json.dumps(pids))

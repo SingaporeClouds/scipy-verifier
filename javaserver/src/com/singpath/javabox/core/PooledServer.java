@@ -1,12 +1,12 @@
 package com.singpath.javabox.core;
 
+import org.apache.log4j.Logger;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-
-import org.apache.log4j.Logger;
 
 public class PooledServer extends Thread {
 

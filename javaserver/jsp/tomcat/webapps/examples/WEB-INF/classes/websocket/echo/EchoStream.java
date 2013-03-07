@@ -16,15 +16,14 @@
  */
 package websocket.echo;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.catalina.websocket.StreamInbound;
 import org.apache.catalina.websocket.WebSocketServlet;
 import org.apache.catalina.websocket.WsOutbound;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
 
 
 public class EchoStream extends WebSocketServlet {

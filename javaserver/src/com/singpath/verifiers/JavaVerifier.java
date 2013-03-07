@@ -2,19 +2,20 @@ package com.singpath.verifiers;
 
 import bsh.Interpreter;
 import bsh.TargetError;
-import com.singpath.verifiers.Verifier;
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import net.minidev.json.*;
-
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
+import net.minidev.json.JSONStyle;
+import net.minidev.json.JSONValue;
 import org.apache.log4j.BasicConfigurator;
 import org.junit.ComparisonFailure;
 
-import java.io.StringWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.nio.charset.Charset;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.nio.charset.Charset;
 
 
 public class JavaVerifier extends Verifier{

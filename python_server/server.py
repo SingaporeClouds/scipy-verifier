@@ -29,8 +29,9 @@ verifiers_dict = {"r":"R_verifier.py",
                   "jsp":None,
                   "java":None,
                   "ruby":None,
+                  "js":None,
                   }
-java_list = ["java","jsp","ruby"]
+java_list = ["java","jsp","ruby","js"]
 
 
 def Command(*cmd,**kwargs):
@@ -146,7 +147,6 @@ class VerifierHandler(tornado.web.RequestHandler):
             only_play = self.get_argument("only_play", "0")
             if only_play!="0":
                 only_play = "1"
-                        
             if verifierName in java_list:
                 try:
                     result = SendToJava(verifierName,jsonrequest)

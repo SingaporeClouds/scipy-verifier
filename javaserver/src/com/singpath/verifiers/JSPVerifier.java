@@ -1,28 +1,23 @@
 package com.singpath.verifiers;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.nio.charset.Charset;
-import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
+import bsh.Interpreter;
+import bsh.TargetError;
+import com.singpath.verifiers.jsp.JspException;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import net.minidev.json.JSONStyle;
 import net.minidev.json.JSONValue;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.junit.ComparisonFailure;
-import bsh.Interpreter;
-import bsh.TargetError;
-import com.singpath.verifiers.jsp.JspException;
+
+import java.io.*;
+import java.nio.charset.Charset;
+import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class JSPVerifier extends Verifier {

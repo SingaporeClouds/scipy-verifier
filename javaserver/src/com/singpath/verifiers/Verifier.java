@@ -1,12 +1,11 @@
 package com.singpath.verifiers;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-
 import net.minidev.json.JSONObject;
 import net.minidev.json.JSONValue;
-
 import org.apache.log4j.Logger;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 public abstract class Verifier extends Thread {
 

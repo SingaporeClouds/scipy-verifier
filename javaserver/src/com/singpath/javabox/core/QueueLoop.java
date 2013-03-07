@@ -1,9 +1,9 @@
 package com.singpath.javabox.core;
 
+import org.apache.log4j.Logger;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
-
-import org.apache.log4j.Logger;
 
 public class QueueLoop extends Thread {
 	protected PoolController controller = null;
