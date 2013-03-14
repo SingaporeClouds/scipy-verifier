@@ -1,6 +1,8 @@
 package com.singpath.verifiers;
 
 import net.minidev.json.JSONObject;
+import net.minidev.json.JSONStyle;
+import net.minidev.json.JSONValue;
 import org.apache.log4j.BasicConfigurator;
 import org.jruby.Ruby;
 import org.jruby.RubyInstanceConfig;
@@ -9,7 +11,11 @@ import org.jruby.javasupport.JavaEmbedUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class RubyVerifier extends Verifier {
@@ -31,6 +37,7 @@ public class RubyVerifier extends Verifier {
 		// Initialize Jruby
 		ByteArrayOutputStream outputBuffer = new ByteArrayOutputStream();
 		PrintStream output = new PrintStream(outputBuffer);
+        JSONObject resultjson = new JSONObject();
 
 		RubyInstanceConfig config = new RubyInstanceConfig();
 		config.setOutput(output);
@@ -40,8 +47,8 @@ public class RubyVerifier extends Verifier {
 				config);
 		RubyRuntimeAdapter evaler = JavaEmbedUtils.newRuntimeAdapter();
 
-		String[] solutionLines = this.solution.split("\n");
-		String[] testscripts = this.tests.split("\n");
+		String[] solutionLines = this.solution.trim().split("\n");
+		String[] testscripts = this.tests.trim().split("\n");
 
 		// write the code that will be execute in Jruby runtime
 		String Code = "\nrequire 'test/unit'\n";
@@ -53,16 +60,18 @@ public class RubyVerifier extends Verifier {
 		Code += "$stderr = out\n";
 		Code += "solved=true\n";
 		Code += "testResults=[]\n";
-		Code += "begin\n";
-		Code += "\tbegin\n";
+        Code += "begin\n";
 		for (String line : solutionLines) {
+
+            Code += "\tbegin\n";
 			Code += "\t\t" + line + "\n";
+            Code += "\trescue Exception => e\n";
+            Code += "\t\t$stdout = STDOUT\n";
+            Code += "\t\tputs '{\"errors\":\"'+e.message+'\"}'\n";
+            Code += "\t\texit\n";
+            Code += "\tend\n";
 		}
-		Code += "\trescue Exception => e\n";
-		Code += "\t\t$stdout = STDOUT\n";
-		Code += "\t\tputs '{\"errors\":\"'+e.message+'\"}'\n";
-		Code += "\t\texit\n";
-		Code += "\tend\n";
+
 		for (String testscript : testscripts) {
 			if (testscript.indexOf("assert") == -1) {
 				Code += "\tbegin\n";
@@ -112,8 +121,34 @@ public class RubyVerifier extends Verifier {
 		Code += "\tprint JSON.dump(resultjson)\n";
 		Code += "rescue SystemExit\n";
 		Code += "end";
-
-		evaler.eval(runtime, Code);
+        try
+        {
+            evaler.eval(runtime, Code);
+        }
+        catch(Exception e)
+        {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            String error = sw.toString();
+            Pattern p = Pattern.compile("<script>:([0-9]+):");
+            Matcher m = p.matcher(error);
+            while(m.find()){
+               String errorLine = m.group(1);
+               int Line = Integer.parseInt(errorLine);
+               Line =  (Line-10)/7 + 1;
+               error = "Syntax error on line "+ Line;
+               this.log.error(error);
+               resultjson.put("errors",error);
+               this.set_result(JSONValue.toJSONString(resultjson, JSONStyle.NO_COMPRESS));
+               return;
+            }
+            error = "Unexpected error";
+            resultjson.put("errors",error);
+            this.set_result(JSONValue.toJSONString(resultjson, JSONStyle.NO_COMPRESS));
+            this.log.error(error);
+            return;
+        }
 		String result = new String(outputBuffer.toByteArray());
 		this.log.error(result);
 		this.set_result(result.trim());
@@ -128,7 +163,7 @@ public class RubyVerifier extends Verifier {
 		JSONObject dict = new JSONObject();
 
 		dict.put("tests", "assert_equal(1,a)\nc=3\nassert_equal(2,b)");
-		dict.put("solution", "a=1;\nb=1;\nputs 'hola'\n");
+		dict.put("solution", "\na=2\n*");
 
 		try {
 
