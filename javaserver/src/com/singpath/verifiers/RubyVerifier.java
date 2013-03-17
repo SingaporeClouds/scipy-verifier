@@ -147,8 +147,28 @@ public class RubyVerifier extends Verifier {
 		BasicConfigurator.configure();
 		JSONObject dict = new JSONObject();
 
-		dict.put("tests", "assert_equal(1,a)\nc=3\nassert_equal(2,b)");
-		dict.put("solution", "\na=2\n*");
+		dict.put("tests", " \n" +
+                "assert_equal(5,3)\n" +
+                "assert_equal(\"foo\", bar)\n" +
+                "assert_equal(true, isCool)\n" +
+                "assert_equal(\"Hello, John\",say_hello(\"John\"))\n" +
+                "assert_equal(5, addResult)\n" +
+                "\n");
+		dict.put("solution"," \n" +
+                "bar = \"foo\"\n" +
+                "isCool = true\n" +
+                "def say_hello(name)\n" +
+                "  var = \"Hello, \" + name\n" +
+                "  return var\n" +
+                "end\n" +
+                "\n" +
+                "addResult = 2+3\n" +
+                "\n" +
+                "class Person\n" +
+                "  attr_accessor :fname, :lname\n" +
+                "end\n" +
+                "\n" +
+                "\t");
 
 		try {
 
