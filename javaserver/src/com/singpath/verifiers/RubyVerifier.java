@@ -129,7 +129,7 @@ public class RubyVerifier extends Verifier {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);
-            String error = "Syntax error, please check your code";
+            String error = "Syntax error, please check your code.  "+sw.toString();
             this.log.error(error);
             resultjson.put("errors",error);
             this.set_result(JSONValue.toJSONString(resultjson, JSONStyle.NO_COMPRESS));

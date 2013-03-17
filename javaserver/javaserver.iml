@@ -30,20 +30,16 @@
       <src_folder value="file://$MODULE_DIR$/src" expected_position="0" />
     </src_description>
   </component>
-  <component name="NewModuleRootManager" inherit-compiler-output="false">
-    <output url="file://$USER_HOME$/Desktop" />
-    <output-test url="file://$USER_HOME$/Desktop" />
+  <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="jdk" jdkName="1.7" jdkType="JavaSDK" />
     <orderEntry type="module-library">
       <library name="bsh-2.0b4.jar">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/libs/bsh-2.0b4.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
@@ -52,7 +48,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/libs/json-smart-1.1.1.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
@@ -61,7 +56,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/libs/log4j-1.2.17.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
@@ -70,7 +64,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/libs/junit-4.11-SNAPSHOT-20120805-1225.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
@@ -79,7 +72,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/libs/ant-1.6.5.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
@@ -88,7 +80,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/libs/commons-el-1.0.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
@@ -97,7 +88,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/libs/commons-logging-1.1.1.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
@@ -106,7 +96,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/libs/jasper-compiler-5.5.15.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
@@ -115,7 +104,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/libs/jasper-runtime-5.5.15.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
@@ -124,7 +112,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/libs/jaxen-1.1.1.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
@@ -133,7 +120,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/libs/jsp-api-2.0.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
@@ -142,7 +128,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/libs/jsptest-fork-0.0.1-SNAPSHOT.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
@@ -151,7 +136,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/libs/jstl-1.1.2.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
@@ -160,7 +144,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/libs/jtidy-4aug2000r7-dev.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
@@ -169,7 +152,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/libs/servlet-api-2.4.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
@@ -178,7 +160,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/libs/standard-1.1.2.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
@@ -187,7 +168,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/libs/commons-io-2.4.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
@@ -196,7 +176,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/libs/jruby-complete-1.7.0.RC1.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
@@ -205,7 +184,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/libs/commons-codec-1.6.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
@@ -214,7 +192,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/libs/fluent-hc-4.2.1.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
@@ -223,7 +200,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/libs/httpclient-4.2.1.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
@@ -232,7 +208,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/libs/httpclient-cache-4.2.1.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
@@ -241,7 +216,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/libs/httpcore-4.2.1.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
@@ -250,7 +224,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/libs/httpmime-4.2.1.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
@@ -259,7 +232,6 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/libs/jsoup-1.7.1.jar!/" />
         </CLASSES>
-        <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
