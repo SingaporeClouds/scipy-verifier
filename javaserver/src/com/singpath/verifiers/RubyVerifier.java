@@ -61,17 +61,16 @@ public class RubyVerifier extends Verifier {
 		Code += "solved=true\n";
 		Code += "testResults=[]\n";
         Code += "begin\n";
+        Code += "\tbegin\n";
 		for (String line : solutionLines) {
-
-            Code += "\tbegin\n";
 			Code += "\t\t" + line + "\n";
-            Code += "\trescue Exception => e\n";
-            Code += "\t\t$stdout = STDOUT\n";
-            Code += "\t\tputs '{\"errors\":\"'+e.message+'\"}'\n";
-            Code += "\t\texit\n";
-            Code += "\tend\n";
-		}
 
+		}
+        Code += "\trescue Exception => e\n";
+        Code += "\t\t$stdout = STDOUT\n";
+        Code += "\t\tputs '{\"errors\":\"'+e.message+'\"}'\n";
+        Code += "\t\texit\n";
+        Code += "\tend\n";
 		for (String testscript : testscripts) {
 			if (testscript.indexOf("assert") == -1) {
 				Code += "\tbegin\n";
@@ -130,29 +129,15 @@ public class RubyVerifier extends Verifier {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);
-            String error = sw.toString();
-            Pattern p = Pattern.compile("<script>:([0-9]+):");
-            Matcher m = p.matcher(error);
-            while(m.find()){
-               String errorLine = m.group(1);
-               int Line = Integer.parseInt(errorLine);
-               Line =  (Line-10)/7 + 1;
-               error = "Syntax error on line "+ Line;
-               this.log.error(error);
-               resultjson.put("errors",error);
-               this.set_result(JSONValue.toJSONString(resultjson, JSONStyle.NO_COMPRESS));
-               return;
-            }
-            error = "Unexpected error";
+            String error = "Syntax error, please check your code";
+            this.log.error(error);
             resultjson.put("errors",error);
             this.set_result(JSONValue.toJSONString(resultjson, JSONStyle.NO_COMPRESS));
-            this.log.error(error);
             return;
         }
 		String result = new String(outputBuffer.toByteArray());
 		this.log.error(result);
 		this.set_result(result.trim());
-
 		return;
 	}
 
