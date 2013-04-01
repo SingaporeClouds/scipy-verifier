@@ -14,8 +14,6 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 
 public class RubyVerifier extends Verifier {
@@ -77,7 +75,7 @@ public class RubyVerifier extends Verifier {
 				Code += "\t\t" + testscript + "\n";
 				Code += "\trescue Exception => e\n";
 				Code += "\t\t$stdout = STDOUT\n";
-				Code += "\t\tputs '{\"errors\":\"in tests: " + testscript
+				Code += "\t\tputs '{\"errors\":\"in tests: " + testscript.replace("'","\\'")
 						+ " ==> '+e.message+'\"}'\n";
 				Code += "\t\texit\n";
 				Code += "\tend\n";
@@ -88,7 +86,7 @@ public class RubyVerifier extends Verifier {
 				Code += "\t\tresultHash = Hash.new\n";
 				Code += "\t\tresultHash['expected'] = ''\n";
 				Code += "\t\tresultHash['received'] = ''\n";
-				Code += "\t\tresultHash['call']     = '" + testscript + "'\n";
+				Code += "\t\tresultHash['call']     = '" + testscript.replace("'","\\'") + "'\n";
 				Code += "\t\tresultHash['correct']  = true\n";
 				Code += "\t\ttestResults.push(resultHash)\n";
 				// assertion exeption
@@ -99,13 +97,13 @@ public class RubyVerifier extends Verifier {
 				Code += "\t\tres=e.message.scan(/<(.*)>/)\n";
 				Code += "\t\tresultHash['expected'] = res[0][0]\n";
 				Code += "\t\tresultHash['received'] = res[1][0]\n";
-				Code += "\t\tresultHash['call']     = '" + testscript + "'\n";
+				Code += "\t\tresultHash['call']     = '" + testscript.replace("'","\\'") + "'\n";
 				Code += "\t\tresultHash['correct']  = false\n";
 				Code += "\t\ttestResults.push(resultHash)\n";
 				// others exeptions
 				Code += "\trescue Exception => e\n";
 				Code += "\t\t$stdout = STDOUT\n";
-				Code += "\t\tputs '{\"errors\":\"in tests: " + testscript
+				Code += "\t\tputs '{\"errors\":\"in tests: " + testscript.replace("'","\\'")
 						+ " ==> '+e.message+'\"}'\n";
 				Code += "\t\texit\n";
 				Code += "\tend\n";
@@ -147,28 +145,8 @@ public class RubyVerifier extends Verifier {
 		BasicConfigurator.configure();
 		JSONObject dict = new JSONObject();
 
-		dict.put("tests", " \n" +
-                "assert_equal(5,3)\n" +
-                "assert_equal(\"foo\", bar)\n" +
-                "assert_equal(true, isCool)\n" +
-                "assert_equal(\"Hello, John\",say_hello(\"John\"))\n" +
-                "assert_equal(5, addResult)\n" +
-                "\n");
-		dict.put("solution"," \n" +
-                "bar = \"foo\"\n" +
-                "isCool = true\n" +
-                "def say_hello(name)\n" +
-                "  var = \"Hello, \" + name\n" +
-                "  return var\n" +
-                "end\n" +
-                "\n" +
-                "addResult = 2+3\n" +
-                "\n" +
-                "class Person\n" +
-                "  attr_accessor :fname, :lname\n" +
-                "end\n" +
-                "\n" +
-                "\t");
+		dict.put("tests", "assert_equal('testing',solution)");
+		dict.put("solution","solution = 'testing'");
 
 		try {
 
