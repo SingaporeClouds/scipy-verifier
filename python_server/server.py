@@ -13,7 +13,7 @@ import base64
 import socket 
 import tornado.ioloop
 import tornado.web
-import traceback
+
 folder = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(folder)
 
@@ -71,21 +71,28 @@ def Command(*cmd,**kwargs):
 
 def SendToJava(verifier,jsonrequest):
     
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)   
-    s.connect(("localhost", 2012))  
-    
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    try:
+        s.connect(("localhost", 2012))
+    except BaseException as e:
+        return {"error":"JavaServer is down please restart the instance"}
+
     message = verifier+" "*(10-len(verifier)) + jsonrequest
     message = base64.b64encode(message)
     
     count = len(message)
     msb, lsb = divmod(count, 256) # split to two bytes
-    s.send(chr(msb))
-    s.send(chr(lsb))
-    s.send(message)
-    
-    data =  s.recv(102400)
-    
-    s.close()
+
+    try:
+        s.send(chr(msb))
+        s.send(chr(lsb))
+        s.send(message)
+        data =  s.recv(102400)
+        s.close()
+    except BaseException as e:
+        return {"error":"JavaServer is down please restart the instance"}
+
     response =  repr(data).decode('UTF-8')
     response = response[response.index("ey"):].strip("'")
     response = base64.b64decode(response)
@@ -150,9 +157,10 @@ class VerifierHandler(tornado.web.RequestHandler):
             if verifierName in java_list:
                 try:
                     result = SendToJava(verifierName,jsonrequest)
-                except:
-                    result = json.dumps({"errors":traceback.print_exc()})
-                if  vcallback!=None:
+                except BaseException:
+                    result = json.dumps({"errors":"Very strange error please talk with the \
+programmer"})
+                if  vcallback is not None:
                     result = vcallback+"("+result+")"
                 self.set_header("Content-type","text/plain")
                 self.write(result)
@@ -169,7 +177,7 @@ class VerifierHandler(tornado.web.RequestHandler):
                 
         result = json.dumps(result)
         
-        if  vcallback!=None:
+        if  vcallback is not None:
             result = vcallback+"("+result+")"
         
         self.set_header("Content-type","text/plain")
