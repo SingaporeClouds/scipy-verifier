@@ -184,7 +184,7 @@ programmer"})
         self.write(result)
         self.finish()
     
-class HealCheckHandler(tornado.web.RequestHandler):
+class HealthCheckHandler(tornado.web.RequestHandler):
     @tornado.web.asynchronous
     def get(self):
         Thread(target=self.check, args=()).start()
@@ -401,7 +401,7 @@ application = tornado.web.Application([
     (r"^/current/commit$", CommitHandler),
     (r"^/test/(.*)", tornado.web.StaticFileHandler, {"path": "./python_server/testers"}),                                
     (r"^/([a-zA-Z0-9_]+)", VerifierHandler),
-    (r"^/aws/heal_check",HealCheckHandler),
+    (r"^/aws/health_check",HealthCheckHandler),
 ])
 
 if __name__ == "__main__":
