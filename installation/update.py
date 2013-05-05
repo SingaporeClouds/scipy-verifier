@@ -5,11 +5,12 @@ import json
 import pwd
 log = logging.getLogger("update")
 folder = os.path.dirname(os.path.abspath(__file__))
-parent_folder           = folder.replace("installation","")
+parent_folder = folder.replace("installation","")
 
-if __name__=="__main__":
-    logging.basicConfig(format='%(asctime)s %(message)s',level=logging.NOTSET,filename=os.path.join(parent_folder,"update.log"))
-    verifiers_home_dir      = pwd.getpwnam("verifiers").pw_dir
+if __name__ == "__main__":
+    logging.basicConfig(format='%(asctime)s %(message)s', level=logging.NOTSET,
+                        filename=os.path.join(parent_folder, "update.log"))
+    verifiers_home_dir = pwd.getpwnam("verifiers").pw_dir
     
     #load singpath_ini
     try:
