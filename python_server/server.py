@@ -13,6 +13,9 @@ import base64
 import socket 
 import tornado.ioloop
 import tornado.web
+import time
+from helpers.disk_cleaner import remove_old_file
+
 
 folder = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(folder)
@@ -32,7 +35,7 @@ verifiers_dict = {"r":"R_verifier.py",
                   "js":None,
                   }
 java_list = ["java","jsp","ruby","js"]
-
+last_disk_check = 0
 
 def Command(*cmd,**kwargs):
 
@@ -116,13 +119,28 @@ class VerifierHandler(tornado.web.RequestHandler):
     
     @tornado.web.asynchronous
     def get(self,verifierName):
+        Thread(target=self.delete_old_files, args=()).start()
         Thread(target=self.verifier, args=("GET", verifierName)).start()
         
     @tornado.web.asynchronous
     def post(self,verifierName):
+        Thread(target=self.delete_old_files, args=()).start()
         Thread(target=self.verifier, args=("POST", verifierName)).start()
         
-    
+
+    def delete_old_files(self):
+        global last_disk_check
+
+        paths = ["/home/verifiers/unity/out",
+                 "/home/verifiers/unity/test",
+                 "/tmp",
+                 "/home/verifiers/javaserver/jsp/tomcat/webapps/ROOT/"]
+
+        now = time.time()
+        if now - last_disk_check > 60*60:
+            remove_old_file(last_disk_check, paths)
+            last_disk_check = now
+
     def verifier(self,method,verifierName=None):
         
         run = True
