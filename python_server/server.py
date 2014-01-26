@@ -280,8 +280,6 @@ class HealthCheckHandler(tornado.web.RequestHandler):
                                        "\nvoid testNotEqualStringArray1(void){ const char *expStrings[] = { \"foo\","\
                                        " \"boo\", \"woo\", \"zoo\" };"\
                                        "\nTEST_ASSERT_EQUAL_STRING_ARRAY(expStrings, testStrings, 4);}" },
-                        "r": {"solution": "factorial <- function(n){\n return(6);}",
-                              "tests": ">>> checkEquals(6, factorial(3))\nTrue"},
                         "python": {"solution": "number = 2\nwizard = 'Oz'\ndef addOne(x):\n return x+1",
                                    "tests": ">>> number\n 2\n>>> wizard\n 'Oz'\n>>> addOne(2)\n  3"}
                     }
