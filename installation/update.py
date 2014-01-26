@@ -35,7 +35,7 @@ if __name__ == "__main__":
     
     #git pull
     log.info(os.popen("/usr/bin/env git reset --hard HEAD").read())
-    msg =  os.popen("/usr/bin/env git pull origin master").read()
+    msg =  os.popen("/usr/bin/env git pull origin Not_R").read()
     log.info(msg)
     msg = msg.splitlines()
    

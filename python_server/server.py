@@ -23,18 +23,17 @@ sys.path.append(folder)
 
 os.chdir("/home/server/scipy-verifier")
 
-verifiers_dict = {"r":"R_verifier.py",
-                  "c" : "c_verifier.py",
-                  "oc":"oc_verifier.py",
-                  "scipy":"scipy_verifier.py",
-                  "python":"python_verifier.py",
-                  "oldjsp":"jsp_verifier.py",
-                  "jsp":None,
-                  "java":None,
-                  "ruby":None,
-                  "js":None,
+verifiers_dict = {"c": "c_verifier.py",
+                  "oc": "oc_verifier.py",
+                  "scipy": "scipy_verifier.py",
+                  "python": "python_verifier.py",
+                  "oldjsp": "jsp_verifier.py",
+                  "jsp": None,
+                  "java": None,
+                  "ruby": None,
+                  "js": None,
                   }
-java_list = ["java","jsp","ruby","js"]
+java_list = ["java", "jsp", "ruby", "js"]
 last_disk_check = 0
 
 def Command(*cmd,**kwargs):
@@ -141,7 +140,7 @@ class VerifierHandler(tornado.web.RequestHandler):
             remove_old_file(last_disk_check, paths)
             last_disk_check = now
 
-    def verifier(self,method,verifierName=None):
+    def verifier(self,method, verifierName = None):
         
         run = True
         if not verifierName in  verifiers_dict:
@@ -223,12 +222,6 @@ class HealthCheckHandler(tornado.web.RequestHandler):
                                                   'call': 'addOne(2)',
                                                   'correct': True}],
                                      'printed': ''},
-                          "r": {'solved': True,
-                                'results': [{'expected': True,
-                                            'received': 'True',
-                                            'call': 'checkEquals(6, factorial(3))',
-                                            'correct': True}],
-                                'printed': ''},
                           'c': {'solved': True,
                                 'results': [{'expected': '',
                                              'received': '',
@@ -365,9 +358,8 @@ class HealthCheckHandler(tornado.web.RequestHandler):
                                "printed": ""},
                         "js": '{"results":[{"call":"assert_equal(1,a);","correct":true},{"call":"assert_equal(2,b);",'\
                               '"correct":true}],"solved":true}'
-
-
         }
+
         for i in java_tests:
             try:
                 result = SendToJava(i, json.dumps(java_tests[i]))
@@ -415,17 +407,124 @@ class HealthCheckHandler(tornado.web.RequestHandler):
         self.finish()
 
 
+class SimpleHealthCheckHandler(tornado.web.RequestHandler):
+    @tornado.web.asynchronous
+    def get(self):
+        Thread(target=self.check, args=()).start()
+
+    def check(self):
+        Fail = False
+        python_results = {"python": {'solved': True,
+                                     'results': [{'expected': 2,
+                                                  'received': '2',
+                                                  'call': 'number',
+                                                  'correct': True},
+                                                 {'expected': 'Oz',
+                                                  'received': 'Oz',
+                                                  'call': 'wizard',
+                                                  'correct': True},
+                                                 {'expected': 3,
+                                                  'received': '3',
+                                                  'call': 'addOne(2)',
+                                                  'correct': True}],
+                                     'printed': ''}
+
+        }
+
+        python_tests = {
+                        "python": {"solution": "number = 2\nwizard = 'Oz'\ndef addOne(x):\n return x+1",
+                                   "tests": ">>> number\n 2\n>>> wizard\n 'Oz'\n>>> addOne(2)\n  3"}
+                    }
+
+        verifiers_status = {}
+
+        for i in python_tests:
+            try:
+                result = json.loads(Command("/usr/bin/env","python",folder+"/verifiers/%s"%verifiers_dict[i],
+                                            json.dumps(python_tests[i]),'0',timeout=5))
+            except Empty:
+                s = "Your code took too long to return. Your solution may be stuck "+\
+                    "in an infinite loop. Please try again."
+                result = {"errors": s}
+
+            if python_results[i] == result:
+                verifiers_status[i] = "<font style='color:green;font-weight:bold;'>OK</font>"
+            else:
+                verifiers_status[i] = "<font style='color:red;font-weight:bold;'>Fail</font>"
+                Fail = True
+
+        java_tests = {"java": {"solution": "int a=1;\nint b=2;",
+                               "tests": "assertEquals(1,a);\nassertEquals(2,b);"},
+                      "ruby": {"solution": "a = 1\nb = 2",
+                               "tests": "assert_equal(1,a)\nassert_equal(2,b)"},
+                      "js": {"solution": "a=1;\nb=2;",
+                             "tests": "assert_equal(1,a);\nassert_equal(2,b);"}
+        }
+        java_results = {"ruby": '{"solved":true,"results":[{"expected":"","received":"","call":"assert_equal(1,a)",'\
+                                '"correct":true},{"expected":"","received":"","call":"assert_equal(2,b)","correct":true}]'\
+                                ',"printed":""}',
+                        "java": '{"results":[{"call":"assertEquals(1,a);","correct":true},{"call":"assertEquals(2,b);",'\
+                                '"correct":true}],"solved":true,"printed":""}',
+                        "js": '{"results":[{"call":"assert_equal(1,a);","correct":true},{"call":"assert_equal(2,b);",'\
+                              '"correct":true}],"solved":true}'
+        }
+
+        for i in java_tests:
+            try:
+                result = SendToJava(i, json.dumps(java_tests[i]))
+            except BaseException:
+                result = json.dumps({"errors": "Very strange error please talk with the dev"})
+
+            if i=="jsp":
+               verifiers_status[i] = "<font style='color:green;font-weight:bold;'>OK</font>"
+            else:
+                if java_results[i] == result:
+                    verifiers_status[i] = "<font style='color:green;font-weight:bold;'>OK</font>"
+                else:
+                    verifiers_status[i] = "<font style='color:reed;font-weight:bold;'>Fail</font>"
+                    Fail = True
+
+        human_names = {"c": "C",
+                       "oc": "Objetive C",
+                       "scipy": "Scipy",
+                       "python": "Python",
+                       "jsp": "JSP",
+                       "java": "Java",
+                       "ruby": "Ruby",
+                       "js": "JavaScript",
+                      }
+        html = """{% autoescape None%}<html>
+        <body>
+        <table>
+        <thead>
+            <tr><th>verifier</th><th>is running?</th></tr>
+        </thead>
+        <tbody>
+         {% for i in human_names %}
+          <tr><td>{{human_names[i]}}</td><td>{{verifiers_status[i]}}</td></tr>
+        {% end %}
+        </tbody>
+        </table>
+        </body>
+        </html>"""
+        t = tornado.web.template.Template(html)
+        self.write(t.generate(human_names=human_names,verifiers_status=verifiers_status))
+        if Fail:
+            self._status_code = 500
+
+        self.finish()
+
+
 application = tornado.web.Application([
     (r"^/current/commit$", CommitHandler),
     (r"^/test/(.*)", tornado.web.StaticFileHandler, {"path": "./python_server/testers"}),                                
     (r"^/([a-zA-Z0-9_]+)", VerifierHandler),
-    (r"^/aws/health_check",HealthCheckHandler),
+    (r"^/aws/health_check", HealthCheckHandler),
+    (r"^/aws/simple_health_check", SimpleHealthCheckHandler),
 ])
 
 if __name__ == "__main__":
-    #sys.stderr = open(folder+"/error_log","a")
-    #sys.stdout = open(folder+"/log","a")
-    
+
     application.listen(80)
     print 'Serving on 80...'
     tornado.ioloop.IOLoop.instance().start()
