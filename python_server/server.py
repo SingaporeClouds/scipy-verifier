@@ -373,8 +373,7 @@ class HealthCheckHandler(tornado.web.RequestHandler):
                     verifiers_status[i] = "<font style='color:reed;font-weight:bold;'>Fail</font>"
                     Fail = True
 
-        human_names = {"r": "R",
-                       "c": "C",
+        human_names = { "c": "C",
                        "oc": "Objetive C",
                        "scipy": "Scipy",
                        "python": "Python",
