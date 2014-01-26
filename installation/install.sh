@@ -23,7 +23,9 @@ cp -rf /home/server/scipy-verifier/junit  /home/verifiers/junit
 chmod 777 -R /home/verifiers/junit
 chmod 777 -R /home/verifiers/unity
 chown verifiers:verifiers -R /home/verifiers
-cd scipy-verifier/installation
+cd scipy-verifier
+git checkout Not_R
+cd installation
 sudo chmod +x /home/server/scipy-verifier/installation/boot.sh
 sudo ln -s /home/server/scipy-verifier/installation/boot.sh /etc/init.d/boot.sh
 sudo update-rc.d boot.sh defaults
