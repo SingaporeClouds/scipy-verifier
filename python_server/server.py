@@ -202,12 +202,20 @@ programmer"})
         self.write(result)
         self.finish()
     
-class HealthCheckHandler(tornado.web.RequestHandler):
+class HealthCheckHandler(BasicHealthCheckHandler):
     @tornado.web.asynchronous
     def get(self):
         Thread(target=self.check, args=()).start()
 
-    def check(self):
+class BasicHealthCheckHandler(tornado.web.RequestHandler):
+    @tornado.web.asynchronous
+    def get(self):
+        Thread(target=self.check_all_but_r, args=()).start()
+
+    def check_all_but_r(self):
+        self.check(exception_list=["r"])
+
+    def check(self, exception_list=[]):
         Fail = False
         python_results = {"python": {'solved': True,
                                      'results': [{'expected': 2,
@@ -296,6 +304,8 @@ class HealthCheckHandler(tornado.web.RequestHandler):
         verifiers_status = {}
 
         for i in python_tests:
+            if i in exception_list:
+                continue
             try:
                 result = json.loads(Command("/usr/bin/env","python",folder+"/verifiers/%s"%verifiers_dict[i],
                                             json.dumps(python_tests[i]),'0',timeout=5))
@@ -369,6 +379,8 @@ class HealthCheckHandler(tornado.web.RequestHandler):
 
         }
         for i in java_tests:
+            if i in exception_list:
+                continue
             try:
                 result = SendToJava(i, json.dumps(java_tests[i]))
             except BaseException:
@@ -383,7 +395,7 @@ class HealthCheckHandler(tornado.web.RequestHandler):
                     verifiers_status[i] = "<font style='color:reed;font-weight:bold;'>Fail</font>"
                     Fail = True
 
-        human_names = {"r": "R",
+        all_human_names = {"r": "R",
                        "c": "C",
                        "oc": "Objetive C",
                        "scipy": "Scipy",
@@ -393,6 +405,7 @@ class HealthCheckHandler(tornado.web.RequestHandler):
                        "ruby": "Ruby",
                        "js": "JavaScript",
                       }
+        human_names= {k:v for k, v in all_human_names.items() if k not in exception_list}
         html = """{% autoescape None%}<html>
         <body>
         <table>
@@ -420,6 +433,7 @@ application = tornado.web.Application([
     (r"^/test/(.*)", tornado.web.StaticFileHandler, {"path": "./python_server/testers"}),                                
     (r"^/([a-zA-Z0-9_]+)", VerifierHandler),
     (r"^/aws/health_check",HealthCheckHandler),
+    (r"^/aws/basic_health_check",BasicHealthCheckHandler),
 ])
 
 if __name__ == "__main__":
