@@ -202,11 +202,6 @@ programmer"})
         self.write(result)
         self.finish()
     
-class HealthCheckHandler(BasicHealthCheckHandler):
-    @tornado.web.asynchronous
-    def get(self):
-        Thread(target=self.check, args=()).start()
-
 class BasicHealthCheckHandler(tornado.web.RequestHandler):
     @tornado.web.asynchronous
     def get(self):
@@ -427,6 +422,10 @@ class BasicHealthCheckHandler(tornado.web.RequestHandler):
 
         self.finish()
 
+class HealthCheckHandler(BasicHealthCheckHandler):
+    @tornado.web.asynchronous
+    def get(self):
+        Thread(target=self.check, args=()).start()
 
 application = tornado.web.Application([
     (r"^/current/commit$", CommitHandler),
