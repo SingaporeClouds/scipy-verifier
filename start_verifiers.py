@@ -29,6 +29,10 @@ os.setgid(user_gid)
 os.setuid(user_uid)
 os.chdir(verifiers_home_dir+"/javaserver/build/classes/")
 
+#start node server
+os.chdir(verifiers_home_dir+"/nodeserver")
+node_pid = str(os.spawnv(os.P_NOWAIT,"/usr/bin/env",("node",verifiers_home_dir+"/nodeserver/bin/"+"angularjs_verifier", "3001")))
+
 #start java server
 java_pid = str(os.spawnv(os.P_NOWAIT, "/usr/bin/java",
                          ("java", "-cp", ":"+verifiers_home_dir+"/javaserver/libs/*", "com/singpath/javabox/Server")))
@@ -38,8 +42,7 @@ os.chdir(verifiers_home_dir+"/javaserver/jsp/tomcat/bin/")
 tomcat_pid = str(os.spawnv(os.P_WAIT,"/usr/bin/env",("sh",verifiers_home_dir+"/javaserver/jsp/tomcat/bin/"+"startup.sh")))
 
 
-
-pids = {"java": java_pid, "python" : output}
+pids = {"java": java_pid, "python" : output, "node": node_pid}
 print pids
 os.chdir("/tmp")
 _file = open("singpath_pids","w+")
