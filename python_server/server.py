@@ -14,6 +14,7 @@ import socket
 import tornado.ioloop
 import tornado.web
 import time
+import urllib2
 from helpers.disk_cleaner import remove_old_file
 
 
@@ -294,6 +295,8 @@ ALL_HUMAN_NAMES = {
 
 LAST_DISK_CHECK = 0
 
+NODE_SERVER_URL = "http://localhost:3001"
+
 
 def Command(*cmd, **kwargs):
     """Enables to run subprocess commands in a different thread with
@@ -362,10 +365,32 @@ def SendToJava(verifier, jsonrequest):
     return response
 
 
-def SendToAngularVerifier(verifier, jsonrequest):
+def sendToAngularVerifier(jsonrequest, timeout=5):
     """Send a test request to Angular Verifier
 
     """
+    data = json.dumps({"jsonrequest": jsonrequest})
+    req = urllib2.Request(NODE_SERVER_URL)
+    req.add_header('Content-Type', 'application/json')
+    try:
+        resp = urllib2.urlopen(req, data=data, timeout=timeout)
+    except socket.timeout:
+        return {
+            "error": (
+                "Your code took too long to return. Your solution may be stuck "
+                "in an infinite loop. Please try again."
+            )
+        }
+    except urllib2.URLError as e:
+        return {
+            "error": "Unexpected error (%s)." % str(e)
+        }
+
+    if resp.code >= 500:
+        return {"error": "NodeServer is down. Please restart the instance"}
+    else:
+        return json.load(resp)
+
 
 class CommitHandler(tornado.web.RequestHandler):
 
@@ -456,7 +481,7 @@ class VerifierHandler(tornado.web.RequestHandler):
                 self.finish()
                 return
             elif verifierName == "angular":
-                result = {"result": jsonrequest}
+                result = sendToAngularVerifier(jsonrequest)
             else:
                 try:
                     result = json.loads(
