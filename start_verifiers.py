@@ -31,7 +31,7 @@ os.chdir(verifiers_home_dir+"/javaserver/build/classes/")
 
 #start node server
 os.chdir(verifiers_home_dir+"/nodeserver")
-node_pid = str(os.spawnv(os.P_NOWAIT,"/usr/bin/env",("node",folder+"/nodeserver/bin/"+"angularjs_verifier", "3001")))
+node_pid = str(os.spawnv(os.P_NOWAIT,"/usr/bin/env",("node",folder+"/nodeserver/bin/"+"angularjs_verifier", "server", "3001")))
 
 #start java server
 java_pid = str(os.spawnv(os.P_NOWAIT, "/usr/bin/java",
