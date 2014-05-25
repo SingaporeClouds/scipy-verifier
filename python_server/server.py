@@ -428,8 +428,9 @@ class HealthCheckHandler(BasicHealthCheckHandler):
         Thread(target=self.check, args=()).start()
 
 application = tornado.web.Application([
+    (r"/", tornado.web.RedirectHandler, {"url": "/test/index.html"}),
     (r"^/current/commit$", CommitHandler),
-    (r"^/test/(.*)", tornado.web.StaticFileHandler, {"path": "./python_server/testers"}),                                
+    (r"^/test/(.*)", tornado.web.StaticFileHandler, {"path": "./python_server/testers"}),
     (r"^/([a-zA-Z0-9_]+)", VerifierHandler),
     (r"^/aws/health_check",HealthCheckHandler),
     (r"^/aws/basic_health_check",BasicHealthCheckHandler),
