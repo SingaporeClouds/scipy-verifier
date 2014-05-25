@@ -28,6 +28,7 @@ VERIFIERS_DICT = {
     "scipy":"scipy_verifier.py",
     "python":"python_verifier.py",
     "oldjsp":"jsp_verifier.py",
+    "angular": None,
     "jsp":None,
     "java":None,
     "ruby":None,
