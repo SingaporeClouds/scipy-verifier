@@ -1,0 +1,27 @@
+<html>
+<script type="text/javascript">
+function updateValue() {
+    var jsonrequest = document.getElementById('jsonrequest')
+    var solution = document.getElementById('solution')
+    var tests = document.getElementById('tests')
+    var obj = {solution: solution.value, tests: tests.value}
+    jsonrequest.value = JSON.stringify(obj)
+}
+</script>
+<body>
+<h2>Angular verifier</h2>
+
+<br>
+Solution code:<br>
+<textarea id="solution" rows="10" cols="80">&lt;!doctype html&gt&lt;html lang='en'&gt&lt;head&gt&lt;meta charset='UTF-8'&gt&lt;title&gtngRepeat&lt;/title&gt&lt;/head&gt&lt;body ng-app='myApp'&gt&lt;div ng-controller='TestCtrl'&gt&lt;h2&gt{{title}}&lt;/h2&gt&lt;ul&gt&lt;li ng-repeat='student in students'&gt{{student}}&lt;/li&gt&lt;/ul&gt&lt;/div&gt&lt;script src='//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.15/angular.min.js'&gt&lt;/script&gt&lt;script&gt;angular.module('myApp', []).controller('TestCtrl', function($scope){$scope.title = 'Hello Students';$scope.students = ['Kai', 'Mako', 'Katara'];});&lt;/script&gt;&lt;/body&gt&lt;/html&gt
+</textarea>
+
+<br>
+Tests:<br>
+<textarea id="tests" rows="10" cols="80">beforeEach(function () {browser().navigateTo('/');});describe('ngRepeat Page', function () {it('should list all the items', function () {expect(repeater('ul li').count()).toEqual(3);});});</textarea>
+<form action="/angular" method="POST">
+<input type="hidden" name="jsonrequest" id="jsonrequest"/>
+<input type="submit" onclick="updateValue()"></input>
+</form>
+</body>
+</html>
