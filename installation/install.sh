@@ -24,7 +24,8 @@ sudo rm /home/server/install_r_libraries
 sudo echo -e "from rpy2.robjects import r\nr(\"install.packages('testthat','/usr/lib/R/site-library/')\")" >> /home/server/install_r_libraries
 sudo python /home/server/install_r_libraries
 sudo git clone git://github.com/SingaporeClouds/scipy-verifier.git
-sudo git submodule init nodeserver
+cd /home/server/scipy-verifier/
+sudo git submodule update --init
 cd /home/server/scipy-verifier/nodeserver
 npm install
 cd /home/server
