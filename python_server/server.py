@@ -456,7 +456,7 @@ class VerifierHandler(tornado.web.RequestHandler):
                 self.finish()
                 return
             elif verifierName == "angular":
-                result = {result: jsonrequest}
+                result = {"result": jsonrequest}
             else:
                 try:
                     result = json.loads(
