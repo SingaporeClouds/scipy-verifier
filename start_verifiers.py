@@ -16,7 +16,13 @@ print os.popen("fuser -k 3001/tcp").read()
 print os.popen("python "+folder+"/compile_java.py").read()
 
 #run python server
-output = str(os.spawnv(os.P_NOWAIT,sys.executable,("python",folder+"/python_server/server.py","")))
+output = str(
+    os.spawnv(
+        os.P_NOWAIT,
+        sys.executable,
+        ("python",folder+"/python_server/server.py","")
+    )
+)
 pw_record = pwd.getpwnam("verifiers")
 user_name = pw_record.pw_name
 user_home_dir = pw_record.pw_dir

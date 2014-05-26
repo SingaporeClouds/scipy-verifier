@@ -1,8 +1,6 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#!/usr/bin/env python
-
-import sys
 import os
 import json
 import logging
@@ -19,8 +17,7 @@ from helpers.disk_cleaner import remove_old_file
 
 
 FOLDER = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(FOLDER)
-os.chdir("/home/server/scipy-verifier")
+
 
 VERIFIERS_DICT = {
     "r":"R_verifier.py",
