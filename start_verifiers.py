@@ -9,6 +9,9 @@ print "closing ports"
 print os.popen("fuser -k 80/tcp").read()
 print os.popen("fuser -k 2012/tcp").read()
 print os.popen("fuser -k 8080/tcp").read()
+print os.popen("fuser -k 3000/tcp").read()
+print os.popen("fuser -k 3001/tcp").read()
+
 #compile and run java server
 print os.popen("python "+folder+"/compile_java.py").read()
 
@@ -27,13 +30,13 @@ os.environ['LANG'] = "en_US.UTF-8"
 os.environ['LC_ALL'] = "en_US.UTF-8"
 os.setgid(user_gid)
 os.setuid(user_uid)
-os.chdir(verifiers_home_dir+"/javaserver/build/classes/")
 
 #start node server
 os.chdir(verifiers_home_dir+"/nodeserver")
 node_pid = str(os.spawnv(os.P_NOWAIT,"/usr/bin/env",("node",folder+"/nodeserver/bin/"+"angularjs_verifier", "server", "3001")))
 
 #start java server
+os.chdir(verifiers_home_dir+"/javaserver/build/classes/")
 java_pid = str(os.spawnv(os.P_NOWAIT, "/usr/bin/java",
                          ("java", "-cp", ":"+verifiers_home_dir+"/javaserver/libs/*", "com/singpath/javabox/Server")))
 
