@@ -1,0 +1,3 @@
+[submodule "nodeserver"]
+	path = nodeserver
+	url = https://github.com/ChrisBoesch/angularjs_verifier.git

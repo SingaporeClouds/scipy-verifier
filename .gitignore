@@ -3,3 +3,5 @@ log
 error_log
 update.log
 singpath.ini
+pyenv/
+*.pyc

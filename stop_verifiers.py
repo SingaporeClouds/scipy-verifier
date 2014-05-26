@@ -25,5 +25,7 @@ except:
 os.popen("fuser -k 80/tcp").read()
 os.popen("fuser -k 2012/tcp").read()
 os.popen("fuser -k 8080/tcp").read()
+os.popen("fuser -k 3000/tcp").read()
+os.popen("fuser -k 3001/tcp").read()
 
 print " Server closed"
