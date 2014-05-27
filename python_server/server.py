@@ -16,7 +16,7 @@ import urllib2
 from helpers.disk_cleaner import remove_old_file
 
 
-FOLDER = os.path.dirname(os.path.abspath(__file__))
+FOLDER = os.path.dirname(os.path.realpath(__file__))
 
 
 VERIFIERS_DICT = {
