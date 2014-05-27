@@ -39,7 +39,7 @@ ${LIB}/python_server: ${LIB} ./python_server/*
 	cp -rf ./python_server $@
 
 ${VAR}: user
-	mkdir -p $@
+	mkdir -p $@/logs
 	chown ${DAEMONUSER}:nogroup -R $@
 
 ${VAR}/javaserver: ${VAR} ./javaserver/* ./installation/tomcat_wrapper.sh
@@ -74,12 +74,13 @@ clean:
 
 deps:
 	apt-get update
-	apt-get upgrade
-	apt-get install openjdk-7-jre openjdk-7-jdk python-scipy python-rpy2 git python-setuptools python-dev build-essential libevent-dev python-gevent r-cran-runit libgnustep-base-dev  gobjc gnustep gnustep-make gnustep-common ruby ant python-pip curl nodejs-legacy supervisor
+	apt-get upgrade -q -y
+	apt-get install -q -y openjdk-7-jre openjdk-7-jdk python-scipy python-rpy2 git python-setuptools python-dev build-essential libevent-dev python-gevent r-cran-runit libgnustep-base-dev  gobjc gnustep gnustep-make gnustep-common ruby ant python-pip curl nodejs-legacy supervisor
+	apt-get -q -y remove  openjdk-6-jre-lib
 	cd /tmp/; wget --no-check-certificate https://www.npmjs.org/install.sh; bash install.sh
 	sudo easy_install gserver
 	sudo easy_install tornado
-	python ./installation/cran.py
+	# python ./installation/cran.py
 
 install: install-bin install-lib install-var
 	cp ./installation/supervisord.conf /etc/supervisor/conf.d/singpath.conf
