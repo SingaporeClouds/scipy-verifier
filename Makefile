@@ -81,13 +81,13 @@ deps:
 	sudo pip install supervisor
 
 install: install-bin install-lib install-var
-	cp /installation/supervisord.conf /etc/supervisor/conf.d/singpath.conf
+	cp ./installation/supervisord.conf /etc/supervisor/conf.d/singpath.conf
 	/etc/init.d/supervisor stop
 	/etc/init.d/supervisor start
 
-install-bin: ${BIN}/${DAEMONAPINAME}
+install-bin: ${BIN}/${DAEMONAPINAME} ${BIN}/${DAEMONANGULARNAME}
 
-install-lib: ${LIB}/python_server ${LIB}/nodeserver ${LIB}/bin
+install-lib: ${LIB}/python_server ${LIB}/nodeserver
 
 install-var: ${VAR}/javaserver ${VAR}/junit ${VAR}/nodeserver ${VAR}/unity
 
