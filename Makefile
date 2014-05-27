@@ -12,6 +12,7 @@ BIN= ${PREFIX}/bin
 LIB= ${PREFIX}/lib/singpath_verifier
 VAR= /var/local/singpath_verifier
 DAEMONAPINAME= singpath_verifier_api
+DAEMONANGULARNAME= singpath_angular_verifier
 DAEMONUSER= verifiers
 
 .PHONY: ./nodeserver clean deps user
@@ -20,8 +21,12 @@ DAEMONUSER= verifiers
 	git submodule update --init
 
 ${BIN}/${DAEMONAPINAME}: ${LIB}/python_server
-	ln -s ${LIB}/python_server/server.py ${BIN}/${DAEMONAPINAME}
-	chmod 755 ${BIN}/${DAEMONAPINAME}
+	ln -s ${LIB}/python_server/server.py $@
+	chmod 755 $@
+
+${BIN}/${DAEMONANGULARNAME}: ${LIB}/nodeserver
+	ln -s ${LIB}/nodeserver/bin/angularjs_verifier $@
+	chmod 755 $@
 
 ${LIB}:
 	mkdir -p ${LIB}
@@ -43,6 +48,7 @@ ${VAR}: user
 ${VAR}/javaserver: ${VAR} ./javaserver/*
 	cp -rf ./javaserver $@
 	cd $@; ant compile
+	mkdir -p $@/jsp/tomcat/logs
 	chmod 755 -R $@
 	chown ${DAEMONUSER}:nogroup -R $@
 
@@ -73,8 +79,13 @@ deps:
 	cd /tmp/; wget --no-check-certificate https://www.npmjs.org/install.sh; bash install.sh
 	sudo easy_install gserver
 	sudo easy_install tornado
+	sudo pip install supervisor
 
 install: install-bin install-lib install-var
+	rm -rf /etc/supervisor/conf.d/singpath.conf
+	cp /installation/supervisord.conf /etc/supervisor/conf.d/singpath.conf
+	/etc/init.d/supervisor stop
+	/etc/init.d/supervisor start
 
 install-bin: ${BIN}/${DAEMONAPINAME}
 
