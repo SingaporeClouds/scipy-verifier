@@ -31,9 +31,6 @@ ${BIN}/${DAEMONANGULARNAME}: ${LIB}/nodeserver
 ${LIB}:
 	mkdir -p ${LIB}
 
-${LIB}/bin: ${LIB} ./bin/*
-	cp -rf ./bin $@
-
 ${LIB}/nodeserver: ${LIB} ./nodeserver
 	cp -rf ./nodeserver $@
 	cd $@; npm install
