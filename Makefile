@@ -42,9 +42,10 @@ ${VAR}: user
 	mkdir -p $@
 	chown ${DAEMONUSER}:nogroup -R $@
 
-${VAR}/javaserver: ${VAR} ./javaserver/*
+${VAR}/javaserver: ${VAR} ./javaserver/* ./installation/tomcat_wrapper.sh
 	cp -rf ./javaserver $@
 	cd $@; ant compile
+	cp ./installation/tomcat_wrapper.sh $@/jsp/tomcat/bin/supervisord_wrapper.sh
 	mkdir -p $@/jsp/tomcat/logs
 	chmod 755 -R $@
 	chown ${DAEMONUSER}:nogroup -R $@
@@ -74,11 +75,11 @@ clean:
 deps:
 	apt-get update
 	apt-get upgrade
-	apt-get install openjdk-7-jre openjdk-7-jdk python-scipy python-rpy2 git python-setuptools python-dev build-essential libevent-dev python-gevent r-cran-runit libgnustep-base-dev  gobjc gnustep gnustep-make gnustep-common ruby ant python-pip curl nodejs-legacy
+	apt-get install openjdk-7-jre openjdk-7-jdk python-scipy python-rpy2 git python-setuptools python-dev build-essential libevent-dev python-gevent r-cran-runit libgnustep-base-dev  gobjc gnustep gnustep-make gnustep-common ruby ant python-pip curl nodejs-legacy supervisor
 	cd /tmp/; wget --no-check-certificate https://www.npmjs.org/install.sh; bash install.sh
 	sudo easy_install gserver
 	sudo easy_install tornado
-	sudo pip install supervisor
+	python ./installation/cran.py
 
 install: install-bin install-lib install-var
 	cp ./installation/supervisord.conf /etc/supervisor/conf.d/singpath.conf
