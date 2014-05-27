@@ -24,7 +24,7 @@ public class JSPVerifier extends Verifier {
 
 
 	protected String EvalPage;
-	protected String TomcatPath = "/home/verifiers/javaserver/jsp/tomcat/webapps/ROOT/";
+	protected String TomcatPath = "/var/local/singpath_verifier/javaserver/jsp/tomcat/webapps/ROOT/";
 
 	public JSPVerifier(String ThreadName, ThreadGroup ThreadGroup) {
 
@@ -46,12 +46,12 @@ public class JSPVerifier extends Verifier {
 		Interpreter interpreter = new Interpreter(null, output, output, false, null);
 		interpreter.setStrictJava(true);
 		JSONObject resultjson = new JSONObject();
-		
+
 		// save solution in a file
 		String uuid  = UUID.randomUUID().toString();
-		
+
 		File file = new File(this.TomcatPath+uuid+".jsp");
-		
+
 		try {
 			FileUtils.writeStringToFile(file, this.solution);
 		}
@@ -65,10 +65,10 @@ public class JSPVerifier extends Verifier {
 			this.log.error(error);
 			return;
 		}
-		
-		
+
+
 		try {
-		//import  Page in beanshell 
+		//import  Page in beanshell
 		interpreter.eval("import com.singpath.verifiers.jsp.Page");
 		//junit
 		interpreter.eval("static import org.junit.Assert.*;");
@@ -91,7 +91,7 @@ public class JSPVerifier extends Verifier {
 		String[] testscripts = this.tests.split("\n");
 		JSONArray testResults = new JSONArray();
 		boolean solved = true;
-		
+
 		for(String testscript : testscripts)
 		{
 			//ignore blank line
@@ -104,7 +104,7 @@ public class JSPVerifier extends Verifier {
 					continue;
 			}
 			catch(TargetError e)
-			{	
+			{
 				//if there exist a error in the jsp page
 				if(e.getTarget().getClass().equals(JspException.class)){
 					String error = e.getTarget().getMessage();
@@ -112,7 +112,7 @@ public class JSPVerifier extends Verifier {
 					this.set_result(JSONValue.toJSONString(resultjson,JSONStyle.NO_COMPRESS));
 					this.log.error(error);
 					return;
-					
+
 				}
 				this.log.error(e.getTarget().getClass());
 				//if the error is not a assertion
@@ -126,8 +126,8 @@ public class JSPVerifier extends Verifier {
 					this.log.error(error);
 					return;
 				}
-				
-				
+
+
 				JSONObject resulthash = new JSONObject();
 				solved = false;
 				//special handling for assertTrue and assertFalse, because the exception message is empty
@@ -139,7 +139,7 @@ public class JSPVerifier extends Verifier {
 					resulthash.put("correct", false);
 					testResults.add(new JSONObject(resulthash));
 					continue;
-					
+
 				}
 				else if(testscript.indexOf("assertFalse(") != -1)
 				{
@@ -150,9 +150,9 @@ public class JSPVerifier extends Verifier {
 					testResults.add(new JSONObject(resulthash));
 					continue;
 				}
-				
+
 				String failS = e.getTarget().getMessage();
-				
+
 				// Compile and use regular expression to find the expected and received values
 				String patternStr = "^expected:<(.*)> but was:<(.*)>$";
 				Pattern pattern = Pattern.compile(patternStr);
@@ -174,7 +174,7 @@ public class JSPVerifier extends Verifier {
 				}
 				testResults.add(new JSONObject(resulthash));
 				continue;
-				
+
 			}
 			catch(Exception e)
 			{
@@ -188,20 +188,20 @@ public class JSPVerifier extends Verifier {
 				this.log.error(error);
 				return;
 			}
-			
+
 			JSONObject resulthash = new JSONObject();
 			resulthash.put("call", testscript);
 			resulthash.put("correct", true);
-			testResults.add(new JSONObject(resulthash));	
+			testResults.add(new JSONObject(resulthash));
 		}
-		
-		
+
+
 		resultjson.put("solved", solved);
 		resultjson.put("results", testResults);
 		resultjson.put("printed", new String(outputBuffer.toByteArray(), Charset.forName("UTF-8")));
 		this.set_result(JSONValue.toJSONString(resultjson,JSONStyle.NO_COMPRESS));
 		return;
-		
+
 	}
 
 	public static void main(String[] args)

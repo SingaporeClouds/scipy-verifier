@@ -423,7 +423,7 @@ class VerifierHandler(tornado.web.RequestHandler):
             "/home/verifiers/unity/out",
              "/home/verifiers/unity/test",
              "/tmp",
-             "/home/verifiers/javaserver/jsp/tomcat/webapps/ROOT/"
+             "/var/local/singpath_verifier/javaserver/jsp/tomcat/webapps/ROOT/"
         ]
 
         now = time.time()
