@@ -73,7 +73,7 @@ clean:
 	rm -rf /etc/supervisor/conf.d/singpath.conf
 
 deps:
-	apt-get update
+	apt-get update -q -y
 	apt-get upgrade -q -y
 	apt-get install -q -y openjdk-7-jre openjdk-7-jdk python-scipy python-rpy2 git python-setuptools python-dev build-essential libevent-dev python-gevent r-cran-runit libgnustep-base-dev  gobjc gnustep gnustep-make gnustep-common ruby ant python-pip curl nodejs-legacy supervisor
 	apt-get -q -y remove  openjdk-6-jre-lib
