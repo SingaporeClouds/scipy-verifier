@@ -420,8 +420,8 @@ class VerifierHandler(tornado.web.RequestHandler):
         global LAST_DISK_CHECK
 
         paths = [
-            "/home/verifiers/unity/out",
-             "/home/verifiers/unity/test",
+            "/var/local/singpath_verifier/unity/out",
+             "/var/local/singpath_verifier/unity/test",
              "/tmp",
              "/var/local/singpath_verifier/javaserver/jsp/tomcat/webapps/ROOT/"
         ]

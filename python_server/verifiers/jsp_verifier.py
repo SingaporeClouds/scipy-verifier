@@ -11,9 +11,9 @@ from Queue import Queue
 import pwd
 from jsp import formatutils
 from jsp import shellutils
-    
+
 def runJSPInstance(jsonrequest,outQueue):
-    
+
     """ run a new  JSP instance and  test the code"""
     os.chdir("/home/verifiers/junit")
     #laod json data in python object
@@ -27,29 +27,29 @@ def runJSPInstance(jsonrequest,outQueue):
         responseJSON = json.dumps(responseDict)
         outQueue.put(responseJSON)
         return
-    
-    
+
+
     def ExecutionError():
         """ catch all the execution error, for the solution and each test """
         errors = traceback.format_exc()
         logging.info("JSP verifier returning errors =%s", errors)
         responseDict = {'errors': '%s' % errors}
         responseJSON = json.dumps(responseDict)
-        outQueue.put(responseJSON) 
-        
-    #os.chdir("/home/verifiers/unity")
+        outQueue.put(responseJSON)
+
+    #os.chdir("/var/local/singpath_verifier/unity")
     try:
         assertions = formatutils.wrapAssertions(tests.strip()) # was "assertions"
         #formattedTests, resultList = formatutils.format_tests(tests, solution)
         # Update the JSP test file by pasting in the solution code and tests.
-        code = formatutils.render_template('java/JSPTester.java', {'parameters':'', 'assertions': assertions}) 
+        code = formatutils.render_template('java/JSPTester.java', {'parameters':'', 'assertions': assertions})
         jspcode = solution.strip()
         compileResult, result = shellutils.compile_jsp_and_get_results(code, jspcode)
     except:
         ExecutionError()
         return
-    
-    # Create a valid json respose based on the xcodebuild results or error returned.        
+
+    # Create a valid json respose based on the xcodebuild results or error returned.
     if compileResult['errors']:
         responseDict = {'errors': compileResult['errors']}
     else:
@@ -59,12 +59,12 @@ def runJSPInstance(jsonrequest,outQueue):
         else: #other unecpected result
             responseDict = {'errors': '%s\n%s' % (compileResult['warnings_and_errors'], result)}
             responseDict['printed'] = compileResult['warnings_and_errors']
-    
+
             # DEBUG - remove later
             responseDict['javac-command'] = compileResult['javac-command']
             responseDict['java-command'] = compileResult['java-command']
 
-    
+
     responseJSON = json.dumps(responseDict)
     logging.info("JSP verifier returning %s",responseJSON)
     outQueue.put(responseJSON)
