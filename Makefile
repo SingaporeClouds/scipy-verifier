@@ -73,7 +73,7 @@ clean:
 	rm -rf /etc/supervisor/conf.d/singpath.conf
 
 deps:
-	apt-get update
+	apt-get update -q -y
 	apt-get upgrade -q -y
 	apt-get install -q -y openjdk-7-jre openjdk-7-jdk python-scipy python-rpy2 \
 		git python-setuptools python-dev build-essential libevent-dev \
