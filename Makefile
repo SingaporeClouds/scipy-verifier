@@ -70,7 +70,9 @@ ${VAR}/nodeserver:
 clean:
 	rm -rf ${LIB}
 	rm -rf ${BIN}/${DAEMONAPINAME}
+	rm -rf ${BIN}/${DAEMONANGULARNAME}
 	rm -rf ${VAR}
+	rm -rf /etc/supervisor/conf.d/singpath.conf
 
 deps:
 	apt-get update
@@ -82,7 +84,6 @@ deps:
 	sudo pip install supervisor
 
 install: install-bin install-lib install-var
-	rm -rf /etc/supervisor/conf.d/singpath.conf
 	cp /installation/supervisord.conf /etc/supervisor/conf.d/singpath.conf
 	/etc/init.d/supervisor stop
 	/etc/init.d/supervisor start
