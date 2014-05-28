@@ -91,9 +91,9 @@ install: install-bin install-lib install-var
 	/etc/init.d/supervisor stop
 	/etc/init.d/supervisor start
 
-install-bin: ${BIN}/${DAEMONAPINAME} ${BIN}/${DAEMONANGULARNAME}
+install-bin: ${BIN}/${DAEMONAPINAME}
 
-install-lib: ${LIB}/python_server ${LIB}/nodeserver
+install-lib: ${LIB}/python_server
 
 install-var: ${VAR}/javaserver ${VAR}/junit ${VAR}/nodeserver ${VAR}/unity
 
