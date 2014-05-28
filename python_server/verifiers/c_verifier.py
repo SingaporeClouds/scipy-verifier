@@ -1,4 +1,4 @@
-import json 
+import json
 import logging
 import re
 import uuid
@@ -15,7 +15,7 @@ test_header = """#include <setjmp.h>
 #define EXPECT_ABORT_BEGIN \\
     if (TEST_PROTECT())    \\
     {
-    
+
 #define VERIFY_FAILS_END                                                       \\
     }                                                                          \\
     Unity.CurrentTestFailed = (Unity.CurrentTestFailed == 1) ? 0 : 1;          \\
@@ -24,7 +24,7 @@ test_header = """#include <setjmp.h>
       UnityPrint("[[[[ Previous Test Should Have Failed But Did Not ]]]]");    \\
       UNITY_OUTPUT_CHAR('\\n');                                                 \\
     }
-    
+
 #define VERIFY_IGNORES_END                                                     \\
     }                                                                          \\
     Unity.CurrentTestFailed = (Unity.CurrentTestIgnored == 1) ? 0 : 1;         \\
@@ -69,28 +69,28 @@ def run_c_instance(jsonrequest, outQueue):
         responseJSON = json.dumps(responseDict)
         outQueue.put(responseJSON)
         return
-    
+
     resultList = []
     solved = False
-    
+
     uid = uuid.uuid4()
-    test_path = '/home/verifiers/unity/test/'
+    test_path = '/var/local/singpath_verifier/unity/test/'
     if not os.path.isdir(test_path):
         os.mkdir(test_path)
     src_file = test_path + 'CSolution_%s.h' % uid
     test_file = test_path + 'CSolution_%s.c' % uid
-    
+
     _solution = open(src_file, "w+")
     _solution.write(solution)
     _solution.close()
-    
+
     _test = open(test_file, "w+")
     _test.write(test_header % ('CSolution_%s.h' % uid))
     _test.write(tests)
     _test.close()
-    
-    os.chdir("/home/verifiers/unity")
-    out_path = "/home/verifiers/unity/out"
+
+    os.chdir("/var/local/singpath_verifier/unity")
+    out_path = "/var/local/singpath_verifier/unity/out"
     if not os.path.isdir(out_path):
         os.mkdir(out_path)
     cmd = "make TARGET_BASE=%s" % ('CSolution_%s' % uid)
@@ -110,10 +110,10 @@ def run_c_instance(jsonrequest, outQueue):
         responseJSON = json.dumps(responseDict)
         outQueue.put(responseJSON)
         return
-    
+
     if len(stdout) > 0:
         solved = True
-        
+
     for i in range(len(stdout)):
         parameters = map(lambda x: x.strip(), stdout[i].split(":"))
         if len(parameters) < 3:

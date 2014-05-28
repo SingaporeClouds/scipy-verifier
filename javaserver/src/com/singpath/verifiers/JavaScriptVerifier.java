@@ -38,8 +38,8 @@ public class JavaScriptVerifier extends Verifier{
 
         try
         {
-            cx.evaluateReader(scope, new FileReader("/home/verifiers/javaserver/js/env.rhino.js"), "env.rhino.js", 0, null);
-            cx.evaluateReader(scope, new FileReader("/home/verifiers/javaserver/js/assert_equal.js"), "assert_equal.js", 0, null);
+            cx.evaluateReader(scope, new FileReader("/var/local/singpath_verifier/javaserver/js/env.rhino.js"), "env.rhino.js", 0, null);
+            cx.evaluateReader(scope, new FileReader("/var/local/singpath_verifier/javaserver/js/assert_equal.js"), "assert_equal.js", 0, null);
 
         }
         catch(Exception e)

@@ -1,8 +1,6 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#!/usr/bin/env python
-
-import sys
 import os
 import json
 import logging
@@ -18,9 +16,8 @@ import urllib2
 from helpers.disk_cleaner import remove_old_file
 
 
-FOLDER = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(FOLDER)
-os.chdir("/home/server/scipy-verifier")
+FOLDER = os.path.dirname(os.path.realpath(__file__))
+
 
 VERIFIERS_DICT = {
     "r":"R_verifier.py",
@@ -423,10 +420,10 @@ class VerifierHandler(tornado.web.RequestHandler):
         global LAST_DISK_CHECK
 
         paths = [
-            "/home/verifiers/unity/out",
-             "/home/verifiers/unity/test",
+            "/var/local/singpath_verifier/unity/out",
+             "/var/local/singpath_verifier/unity/test",
              "/tmp",
-             "/home/verifiers/javaserver/jsp/tomcat/webapps/ROOT/"
+             "/var/local/singpath_verifier/javaserver/jsp/tomcat/webapps/ROOT/"
         ]
 
         now = time.time()
