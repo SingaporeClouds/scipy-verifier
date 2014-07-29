@@ -15,25 +15,15 @@ DAEMONAPINAME= singpath_verifier_api
 DAEMONANGULARNAME= singpath_angular_verifier
 DAEMONUSER= verifiers
 
-.PHONY: ./nodeserver clean deps user
+.PHONY: clean deps user
 
-./nodeserver:
-	git submodule update --init
 
 ${BIN}/${DAEMONAPINAME}: ${LIB}/python_server
 	ln -s ${LIB}/python_server/server.py $@
 	chmod 755 $@
 
-${BIN}/${DAEMONANGULARNAME}: ${LIB}/nodeserver
-	ln -s ${LIB}/nodeserver/bin/angularjs_verifier $@
-	chmod 755 $@
-
 ${LIB}:
 	mkdir -p ${LIB}
-
-${LIB}/nodeserver: ${LIB} ./nodeserver
-	cp -rf ./nodeserver $@
-	cd $@; npm install
 
 ${LIB}/python_server: ${LIB} ./python_server/*
 	cp -rf ./python_server $@
@@ -60,11 +50,6 @@ ${VAR}/junit: ${VAR} ./python_server/junit/*
 	chmod 755 -R $@
 	chown ${DAEMONUSER}:nogroup -R $@
 
-${VAR}/nodeserver:
-	mkdir -p $@
-	chmod 755 -R $@
-	chown ${DAEMONUSER}:nogroup -R $@
-
 clean:
 	rm -rf ${LIB}
 	rm -rf ${BIN}/${DAEMONAPINAME}
@@ -73,25 +58,24 @@ clean:
 	rm -rf /etc/supervisor/conf.d/singpath.conf
 
 deps:
-	apt-get update
-	apt-get upgrade -q -y
-	apt-get install -q -y openjdk-7-jre openjdk-7-jdk python-scipy python-rpy2 git python-setuptools python-dev build-essential libevent-dev python-gevent r-cran-runit libgnustep-base-dev  gobjc gnustep gnustep-make gnustep-common ruby ant python-pip curl nodejs-legacy supervisor
+	apt-get install -q -y openjdk-7-jre openjdk-7-jdk python-scipy python-rpy2 \
+		git python-setuptools python-dev build-essential libevent-dev \
+		python-gevent r-cran-runit libgnustep-base-dev  gobjc gnustep \
+		gnustep-make gnustep-common ruby ant python-pip curl supervisor
 	apt-get -q -y remove  openjdk-6-jre-lib
-	cd /tmp/; wget --no-check-certificate https://www.npmjs.org/install.sh; bash install.sh
-	sudo easy_install gserver
-	sudo easy_install tornado
-	# python ./installation/cran.py
+	easy_install gserver
+	easy_install tornado
 
 install: install-bin install-lib install-var
 	cp ./installation/supervisord.conf /etc/supervisor/conf.d/singpath.conf
 	/etc/init.d/supervisor stop
 	/etc/init.d/supervisor start
 
-install-bin: ${BIN}/${DAEMONAPINAME} ${BIN}/${DAEMONANGULARNAME}
+install-bin: ${BIN}/${DAEMONAPINAME}
 
-install-lib: ${LIB}/python_server ${LIB}/nodeserver
+install-lib: ${LIB}/python_server
 
-install-var: ${VAR}/javaserver ${VAR}/junit ${VAR}/nodeserver ${VAR}/unity
+install-var: ${VAR}/javaserver ${VAR}/junit ${VAR}/unity
 
 user:
 	id ${DAEMONUSER} || adduser --system --home ${VAR} ${DAEMONUSER}

@@ -513,7 +513,10 @@ class BasicHealthCheckHandler(tornado.web.RequestHandler):
 
     @tornado.web.asynchronous
     def get(self):
-        Thread(target=self.check_all_but_r, args=()).start()
+        Thread(target=self.check_main, args=()).start()
+
+    def check_main(self):
+        self.check(exception_list=['scipy', 'jsp', 'oldjsp', 'angular', 'c', 'ruby', 'oc', 'r'])
 
     def check_all_but_r(self):
         self.check(exception_list=["r"])
